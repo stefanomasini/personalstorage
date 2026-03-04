@@ -41,7 +41,6 @@ Organized by vehicle name + plate number: `Yaris FM202AL`, `Vespa FO142091`, `Tr
 
 #### 5. Work & Business
 - `Aramis/` — own consulting business: `Expenses/` (with `to_process`/`processed` pipeline), `Carta 6095/` (credit card statements by year), `Logo Aramis/` (branding assets), `OLD Aramis ITA/` (closed Italian entity 2010–2012)
-- `Sistemistica Aramis/` — sysadmin documentation per client (Buffetti, Errebian, Kratos, Vanni, etc.) plus Linode and VPN configs
 - `People/Balsamiq/` — employment history: contracts by year, pay slips (`Buste paga/`), expense reports, welfare
 - `People/Clienti Aramis/` — client folders (Errebian, Buffetti, Kratos, Spicers, Desktoo, etc.)
 - `People/MyBrandPortal/` — a project with technical, business, and legal docs
@@ -54,32 +53,29 @@ Used extensively and consistently throughout: `YYYY-MM-DD - description` for eve
 - `Altra roba molto vecchia da processare/` — backlog of unsorted old material (photos, negatives, old documents)
 - `Media/` — scanned media
 
-#### 8. Personal (`Stefano/`)
-Tax returns (`Dichiarazione redditi Stefano/` by year), membership cards (`Tessere/` — Ikea, KLM), blog, drawings, phone docs, accounting docs.
-
-#### 9. Structured accounting (`accounting_docs/`)
+#### 8. Structured accounting (`accounting_docs/`)
 Organized by type (`Assets/`, `Liabilities/`) then by entity (`Personal`, `Aramis-NL`, `Aramis-IT`, `Luna`, `MyBrandPortal`).
 
-#### 10. Events & trips by time (`_by time/`)
+#### 9. Events & trips by time (`_by time/`)
 Chronological archive of events: yearly folders (`1993-2014`, `2015`–`2022`) and individual dated events (`2023-04-15 - US Chicago + Las Vegas`, `2023-09-05 - Napoli`, `2025-05-26 conf berlino`). Also contains WhatsApp chat exports.
 
-#### 11. Talks & presentations (`Talks/`)
-Tech presentations, each date-prefixed with conference name: React, Redux, Relay, GraphQL, Docker/Convox, Remote Work. Range: 2014–2020.
-
-#### 12. Music (`Musica/`)
+#### 10. Music (`Musica/`)
 Family music projects: `GarageBand Stefano/` (Ableton and GarageBand projects), `Martino Musica/` (bass lessons, klasseband, GarageBand projects), `B+C/`.
 
-#### 13. Photos (`Photos/`)
+#### 11. Photos (`Photos/`)
 Event-based photo collections: trips (India 2010, Stoccolma 2011), places (Leiden apartments), weddings, outings. Range: 2010–2012.
 
-#### 14. Books (`books/`)
+#### 12. Books (`books/`)
 Ebooks including a `Calibre Library/` (by author), audiobooks (`audiolibri/` — Italian classics), Steiner books.
 
-#### 15. Appliance warranties (`Garanzie e istruzioni/`)
+#### 13. Appliance warranties (`Garanzie e istruzioni/`)
 Root-level collection of warranties and manuals organized by item: computers, electronics, garden tools, music gear, kitchen appliances, phones, furniture (Herman Miller), robot vacuum, projector, UPS, etc.
 
-#### 16. Art project (`Small Man Art/`)
-Daily drawing/illustration project running Jun 24, 2012 – Jun 5, 2013 (~340 images). Each file is `YYYY-MM-DD - Title.tif`. A personal creative archive.
+#### 14. Event tickets (`Biglietti/`)
+Tickets for concerts and events, date-prefixed.
+
+#### 15. Projects (`Projects/`)
+Miscellaneous project files and notes: Raspberry Pi builds, Arduino, hobby projects (Tamiya car, kids' programming), Aramis hosting/cloud/Docker notes, photography notes.
 
 ---
 
@@ -87,49 +83,29 @@ Daily drawing/illustration project running Jun 24, 2012 – Jun 5, 2013 (~340 im
 
 These are problems caused by organic file dumping over the years.
 
-#### 1. Loose files at root level
-The root of `~/Dropbox` has ~40+ orphan files that don't belong to any folder:
-- **Unnamed scans/screenshots**: `2022-06-07 13.09.41.pdf`, `2023-12-28 15.40.56.pdf`, `2024-02-18 10.32.44.pdf`, etc. — timestamp-only names with no context
-- **Phone photos**: `20241109_081312.jpg`, `20260112_173843.jpg`, `IMG-20240215-WA0008.jpg` — dumped from phone/WhatsApp
-- **Event tickets**: `Biglietti Cremonini 13 Giu 2026.pdf`, `biglietti avatar 2.pdf`, `biglietti-fiera-oriente.pdf`, `villa borghese.pdf`, `Tessera cinema.pdf`, `DANIELE SILVESTRI.pdf`, `Luca Carboni.pdf`, `Biglietto Scrovegni.pdf`
-- **Random music files**: `Arrow.mp3`, `Harp.mp3`, `Morning Light.mp3`
-- **Misc**: `Pomodori.ods`, `wip.patch`, `Brewfile.lock.json`, `stepper.pdf`, `Cats in the garden.mp4`, `tumiturbi 1993-12.pdf`, `Medicinali Ayurveda.pdf`, `pa06-4012_NI-A824.pdf`, `sole_*.pdf` (4 files)
-- **MuseScore duplicates**: `Esercizio 2 Lia Masini.mscz` and `Esercizio_2 Lia Masini.mscz`
-
-#### 2. Duplicate / overlapping structures
-- `Expenses/` (root, contains a single file) vs `Aramis/Expenses/` — unclear boundary
-- `accounting_docs/` (root) vs `Stefano/accounting_docs/` — same thing?
+#### 1. Duplicate / overlapping structures
 - `Contabilità casa/` (root) overlaps with `Italia/` financial data and `accounting_docs/`
 - `Garanzie e istruzioni/` (root, general appliances) vs `Case/Via Mengoni 18/Garanzie e istruzioni/` (house-specific) — same concept split across two places
-- `N26/` (root) — should be under `Italia/` or a banking section
 - `Pragmatic Bookshelf/` (root, 5 programming books) vs `books/` — overlapping
-- `Sistemistica Aramis/` (root) vs `Aramis/` and `People/Clienti Aramis/` — three places for Aramis-related client work
-- `2025-09-22 - AI conf Paris/` and `2025-11 balsamiq retreat/` at root — should be in `_by time/`
 
-#### 3. Inconsistent naming
-- Mixed languages: `Famiglia/` vs `Family Room/`, `Mezzi/` vs `Photos/`, `Ricette/` vs `Expenses/`
+#### 2. Inconsistent naming
+- Mixed languages: `Famiglia/` vs `Family Room/`, `Mezzi/` vs `Photos/`, `Ricette/` vs `Biglietti/`
 - Mixed case: `books/` vs `Photos/`, `accounting_docs/` vs `Contabilità casa/`
 - Odd prefix: `_by time/` — underscore convention used nowhere else
 - `2025-05-27 Local-first conf` is inside `Mezzi/` (vehicles) — clearly misplaced
 
-#### 4. Orphaned / legacy directories
+#### 3. Orphaned / legacy directories
 - `Family Room/` — empty, old Dropbox shared folder
-- `Paper Docs/` — empty, deprecated Dropbox Paper feature
-- `Stuff makerspace/` — single subfolder from 2018, likely stale
 - `stewiki/` — old personal wiki backup (`stewiki.html_backup`)
-- `mar rosso/` — contains a single PDF
-- `other/` — catch-all containing only `Yoga - Meditazione/`
-- `Ricette/` — small (Indian recipes from Mitran), possibly stale
 
-#### 5. Sensitive files exposed at root
+#### 4. Sensitive files exposed at root
 - `secrets-aramis.dat`, `secrets-balsamiq.dat`, `secrets-stefano.dat`
-- `stefano.ovpn`
 - `stefano_gpg_public.key`
 - `1Password emergency kits/`
 
 These are security-sensitive and probably shouldn't sit in the Dropbox root unprotected.
 
-#### 6. App-managed directories (not user-organized)
+#### 5. App-managed directories (not user-organized)
 - `Apps/` — Dropbox app integrations (Balsamiq Cloud backups, Aramis Receipts)
 - `iTerm2 Preferences/` — single plist file for iTerm2 config sync
 - `.moneydancesync/` — financial software sync
