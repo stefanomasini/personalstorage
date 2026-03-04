@@ -1,2 +1,3 @@
 #!/usr/bin/env bash
-exec envchain personalstorage npx tsx "$(dirname "$0")/src/index.ts" "$@"
+export $(wellkept list personalstorage)
+exec npx tsx "$(dirname "$0")/src/index.ts" "$@"

@@ -3,6 +3,7 @@ import { auth } from "./commands/auth.js";
 import { initTemplate } from "./commands/init.js";
 import { setMetadata } from "./commands/set.js";
 import { getMetadata } from "./commands/get.js";
+import { listMetadata } from "./commands/list.js";
 
 const program = new Command();
 
@@ -40,6 +41,13 @@ program
   .description("Get metadata for a Dropbox path")
   .action(async (filePath: string) => {
     await getMetadata(filePath);
+  });
+
+program
+  .command("list <path>")
+  .description("List child folders and their usage")
+  .action(async (folderPath: string) => {
+    await listMetadata(folderPath);
   });
 
 program.parse();
