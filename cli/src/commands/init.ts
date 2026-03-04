@@ -15,6 +15,21 @@ const TEMPLATE_ID_FILE = path.join(
 export async function initTemplate() {
   const dbx = getClient();
 
+  const existingId = fs.existsSync(TEMPLATE_ID_FILE)
+    ? fs.readFileSync(TEMPLATE_ID_FILE, "utf-8").trim()
+    : null;
+
+  if (existingId) {
+    await dbx.filePropertiesTemplatesUpdateForUser({
+      template_id: existingId,
+      name: TEMPLATE_NAME,
+      description: TEMPLATE_DESCRIPTION,
+      add_fields: TEMPLATE_FIELDS,
+    });
+    console.log(`Template updated: ${existingId}`);
+    return;
+  }
+
   const response = await dbx.filePropertiesTemplatesAddForUser({
     name: TEMPLATE_NAME,
     description: TEMPLATE_DESCRIPTION,

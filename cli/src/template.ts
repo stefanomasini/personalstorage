@@ -5,6 +5,7 @@ export const TEMPLATE_DESCRIPTION = "Custom metadata for personal storage manage
 
 export const FIELD_STORAGE_USAGE = "storage_usage";
 export const FIELD_STORAGE_IGNORE = "storage_ignore";
+export const FIELD_STORAGE_LEAF = "storage_leaf";
 
 export const TEMPLATE_FIELDS: file_properties.PropertyFieldTemplate[] = [
   {
@@ -15,6 +16,11 @@ export const TEMPLATE_FIELDS: file_properties.PropertyFieldTemplate[] = [
   {
     name: FIELD_STORAGE_IGNORE,
     description: "Whether to ignore this path in storage reports (true/false)",
+    type: { ".tag": "string" },
+  },
+  {
+    name: FIELD_STORAGE_LEAF,
+    description: "Whether this folder is a leaf node (true/false)",
     type: { ".tag": "string" },
   },
 ];

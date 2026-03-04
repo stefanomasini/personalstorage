@@ -1,11 +1,12 @@
 import { getClient } from "../dropbox.js";
 import { getTemplateId } from "../template-id.js";
-import { FIELD_STORAGE_USAGE, FIELD_STORAGE_IGNORE } from "../template.js";
+import { FIELD_STORAGE_USAGE, FIELD_STORAGE_IGNORE, FIELD_STORAGE_LEAF } from "../template.js";
 import type { file_properties } from "dropbox/types/dropbox_types.js";
 
 interface SetOptions {
   usage?: string;
   ignore?: boolean;
+  leaf?: boolean;
 }
 
 export async function setMetadata(filePath: string, options: SetOptions) {
@@ -22,9 +23,15 @@ export async function setMetadata(filePath: string, options: SetOptions) {
       value: String(options.ignore),
     });
   }
+  if (options.leaf !== undefined) {
+    fields.push({
+      name: FIELD_STORAGE_LEAF,
+      value: String(options.leaf),
+    });
+  }
 
   if (fields.length === 0) {
-    console.error("No properties specified. Use --usage or --ignore/--no-ignore.");
+    console.error("No properties specified. Use --usage, --ignore/--no-ignore, or --leaf/--no-leaf.");
     process.exit(1);
   }
 

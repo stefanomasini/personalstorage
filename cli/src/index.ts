@@ -32,7 +32,9 @@ program
   .option("--usage <string>", "Storage usage description")
   .option("--ignore", "Mark path as ignored in storage reports")
   .option("--no-ignore", "Unmark path as ignored")
-  .action(async (filePath: string, options: { usage?: string; ignore?: boolean }) => {
+  .option("--leaf", "Mark folder as a leaf node")
+  .option("--no-leaf", "Unmark folder as leaf")
+  .action(async (filePath: string, options: { usage?: string; ignore?: boolean; leaf?: boolean }) => {
     await setMetadata(filePath, options);
   });
 
@@ -46,8 +48,9 @@ program
 program
   .command("list <path>")
   .description("List child folders and their usage")
-  .action(async (folderPath: string) => {
-    await listMetadata(folderPath);
+  .option("--markdown", "Force markdown output (default when not a TTY)")
+  .action(async (folderPath: string, options: { markdown?: boolean }) => {
+    await listMetadata(folderPath, options);
   });
 
 program.parse();

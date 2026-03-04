@@ -1,8 +1,12 @@
 import { getClient } from "../dropbox.js";
 import { getTemplateId } from "../template-id.js";
-import { FIELD_STORAGE_USAGE, FIELD_STORAGE_IGNORE } from "../template.js";
+import { FIELD_STORAGE_USAGE, FIELD_STORAGE_IGNORE, FIELD_STORAGE_LEAF } from "../template.js";
 
-export async function listMetadata(folderPath: string) {
+interface ListOptions {
+  markdown?: boolean;
+}
+
+export async function listMetadata(folderPath: string, options: ListOptions = {}) {
   const dbx = getClient();
   const templateId = getTemplateId();
 
@@ -38,8 +42,24 @@ export async function listMetadata(folderPath: string) {
     if (ignore === "true") continue;
 
     const usage = fields.find((f: any) => f.name === FIELD_STORAGE_USAGE)?.value;
+    const leaf = fields.find((f: any) => f.name === FIELD_STORAGE_LEAF)?.value;
+    const isLeaf = leaf === "true";
     const description = usage || "(no usage set)";
-    lines.push(`- **${folder.name}** — ${description}`);
+    const useMarkdown = options.markdown || !process.stdout.isTTY;
+
+    if (useMarkdown) {
+      const leafTag = isLeaf ? " [leaf]" : " [subfolders]";
+      lines.push(`- **${folder.name}**${leafTag} — ${description}`);
+    } else {
+      const name = `\x1b[1;36m${folder.name}\x1b[0m`;
+      const leafTag = isLeaf
+        ? ` \x1b[33m[leaf]\x1b[0m`
+        : ` \x1b[90m[subfolders]\x1b[0m`;
+      const desc = usage
+        ? `\x1b[0m${usage}\x1b[0m`
+        : `\x1b[90m(no usage set)\x1b[0m`;
+      lines.push(`  ${name}${leafTag} — ${desc}`);
+    }
   }
 
   if (lines.length === 0) {
