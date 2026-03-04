@@ -1,0 +1,21 @@
+{
+  "name": "@personalstorage/cli",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "storage-cli": "./storage-cli"
+  },
+  "scripts": {
+    "cli": "tsx src/index.ts"
+  },
+  "dependencies": {
+    "commander": "^13.1.0",
+    "dropbox": "^10.34.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0"
+  }
+}
