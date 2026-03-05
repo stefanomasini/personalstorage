@@ -27,6 +27,8 @@ const PROMPT = `Analyze the file provided and return ONLY a JSON object (no mark
 - "description": ~100 words explaining what this file is and what's in it. Write it so it works well as input to an embedding model for vector search.
 - "detail": optional. A markdown summary of the key details in the document, formatted for quick scanning. Omit this field if the file has no meaningful detail to extract (e.g. a simple image).
 
+Prefer the Italian language when analyzing documents in Italian, and English for documents in English or other languages. Use the original language only for words that don't translate well, like product names, organization names, specific jargon, etc.
+
 Return ONLY the JSON object.`;
 
 export async function analyzeFile(localPath: string) {
