@@ -1,6 +1,6 @@
 import { getClient } from "../dropbox.js";
 import { getTemplateId } from "../template-id.js";
-import { FIELD_STORAGE_TEMPLATES } from "../template.js";
+import { FIELD_STORAGE_TEMPLATES, FIELD_DOCUMENT_CONTENTS_PREFIX, reassembleDocumentContents } from "../template.js";
 
 export async function getMetadata(filePath: string) {
   const dbx = getClient();
@@ -30,6 +30,7 @@ export async function getMetadata(filePath: string) {
 
   console.log(`Metadata for ${filePath}:`);
   for (const field of group.fields) {
+    if (field.name.startsWith(FIELD_DOCUMENT_CONTENTS_PREFIX)) continue;
     if (field.name === FIELD_STORAGE_TEMPLATES && field.value) {
       try {
         const templates = JSON.parse(field.value);
@@ -46,5 +47,14 @@ export async function getMetadata(filePath: string) {
     } else {
       console.log(`  ${field.name}: ${field.value}`);
     }
+  }
+
+  const docContents = reassembleDocumentContents(group.fields);
+  if (docContents && typeof docContents === "object") {
+    const doc = docContents as Record<string, string>;
+    console.log(`  document_contents:`);
+    if (doc.name) console.log(`    name: ${doc.name}`);
+    if (doc.description) console.log(`    description: ${doc.description}`);
+    if (doc.detail) console.log(`    detail: ${doc.detail}`);
   }
 }

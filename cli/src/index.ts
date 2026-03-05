@@ -6,6 +6,7 @@ import { getMetadata } from "./commands/get.js";
 import { listMetadata } from "./commands/list.js";
 import { checkMetadata } from "./commands/check.js";
 import { startLiveServer } from "./commands/live.js";
+import { analyzeFile } from "./commands/analyze.js";
 
 function normalizePath(p: string): string {
   return p === "/" ? "" : p;
@@ -79,6 +80,13 @@ program
   .option("--port <number>", "Port to listen on", "3141")
   .action(async (options: { port: string }) => {
     await startLiveServer(parseInt(options.port, 10));
+  });
+
+program
+  .command("analyze <local-path>")
+  .description("Analyze a local file with Claude and store document metadata")
+  .action(async (localPath: string) => {
+    await analyzeFile(localPath);
   });
 
 program.parseAsync().catch((err) => {

@@ -82,6 +82,19 @@ List child folders with their usage metadata.
 | ------------ | ---------------------------------------------- |
 | `--markdown` | Force markdown output (default when not a TTY) |
 
+## `analyze <local-path>`
+
+Analyze a local file using Claude AI and store the analysis as Dropbox metadata.
+
+```bash
+./storage-cli analyze /Users/you/Dropbox/Documents/report.pdf
+```
+
+The command:
+1. Derives the Dropbox path from the local path (looks for `Dropbox` in the path segments)
+2. Calls Claude CLI to analyze the file and produce a JSON with `name`, `description`, and optionally `detail`
+3. Stores the result in the `document_contents` metadata field on the Dropbox path
+
 ## `check`
 
 Find terminal folders not marked as leaf. Use this tool to identify folders that may need metadata updates.

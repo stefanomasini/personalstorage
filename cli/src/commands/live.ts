@@ -7,7 +7,7 @@ import { applyMetadata } from "./set.js";
 import { fetchExistingTemplates } from "../metadata.js";
 import { getClient } from "../dropbox.js";
 import { getTemplateId } from "../template-id.js";
-import { FIELD_STORAGE_TEMPLATES } from "../template.js";
+import { FIELD_STORAGE_TEMPLATES, FIELD_DOCUMENT_CONTENTS_PREFIX, reassembleDocumentContents } from "../template.js";
 
 const HTML_PATH = path.join(
   path.dirname(new URL(import.meta.url).pathname),
@@ -44,7 +44,12 @@ async function getRawMetadata(filePath: string) {
   if (!group) return {};
   const result: Record<string, string> = {};
   for (const field of group.fields) {
+    if (field.name.startsWith(FIELD_DOCUMENT_CONTENTS_PREFIX)) continue;
     result[field.name] = field.value;
+  }
+  const docContents = reassembleDocumentContents(group.fields);
+  if (docContents) {
+    result["document_contents"] = JSON.stringify(docContents);
   }
   return result;
 }
