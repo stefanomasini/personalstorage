@@ -8,14 +8,24 @@ import {
 } from "../template.js";
 import { fetchExistingTemplates, fetchFieldValue, getParentPath } from "../metadata.js";
 
-interface ListOptions {
-  markdown?: boolean;
+export interface FolderEntry {
+  name: string;
+  path: string;
+  usage: string | undefined;
+  usageSource: "own" | "template" | null;
+  leaf: boolean;
+  ignore: boolean;
+  hasMetadata: boolean;
+  appliedTemplate: string | undefined;
 }
 
-export async function listMetadata(
-  folderPath: string,
-  options: ListOptions = {},
-) {
+export interface ListResult {
+  path: string;
+  appliedTemplate: string | undefined;
+  children: FolderEntry[];
+}
+
+export async function listFolderData(folderPath: string): Promise<ListResult> {
   const dbx = getClient();
   const templateId = getTemplateId();
 
@@ -40,7 +50,6 @@ export async function listMetadata(
     .filter((e: any) => e[".tag"] === "folder")
     .sort((a: any, b: any) => a.name.localeCompare(b.name));
 
-  // Resolve applied template if present
   const appliedTemplateName = await fetchFieldValue(folderPath, FIELD_STORAGE_APPLIED_TEMPLATE);
   let templateEntries: Record<string, string> = {};
   if (appliedTemplateName && appliedTemplateName !== "") {
@@ -49,59 +58,71 @@ export async function listMetadata(
     templateEntries = parentTemplates[appliedTemplateName] ?? {};
   }
 
-  const lines: string[] = [];
+  const children: FolderEntry[] = [];
   for (const folder of folders) {
     const group = folder.property_groups?.find(
       (g: any) => g.template_id === templateId,
     );
-
     const fields = group?.fields ?? [];
-    const ignore = fields.find(
-      (f: any) => f.name === FIELD_STORAGE_IGNORE,
-    )?.value;
-    if (ignore === "true") continue;
+    const ignore = fields.find((f: any) => f.name === FIELD_STORAGE_IGNORE)?.value === "true";
+    const leaf = fields.find((f: any) => f.name === FIELD_STORAGE_LEAF)?.value === "true"
+      || (folder.name in templateEntries);
+    const ownUsage = fields.find((f: any) => f.name === FIELD_STORAGE_USAGE)?.value || undefined;
+    const tplUsage = templateEntries[folder.name] || undefined;
+    const folderAppliedTemplate = fields.find((f: any) => f.name === FIELD_STORAGE_APPLIED_TEMPLATE)?.value || undefined;
 
-    const useMarkdown = options.markdown || !process.stdout.isTTY;
-
-    if (!group) {
-      const tplUsage = templateEntries[folder.name];
-      if (useMarkdown) {
-        lines.push(tplUsage ? `- **${folder.name}** — ${tplUsage}` : `- **${folder.name}**`);
-      } else {
-        const name = `\x1b[1;36m${folder.name}\x1b[0m`;
-        lines.push(tplUsage ? `${name} — ${tplUsage}` : name);
-      }
-      continue;
-    }
-
-    const ownUsage = fields.find(
-      (f: any) => f.name === FIELD_STORAGE_USAGE,
-    )?.value;
-    const usage = ownUsage || templateEntries[folder.name];
-    const leaf = fields.find((f: any) => f.name === FIELD_STORAGE_LEAF)?.value;
-    const isLeaf = leaf === "true";
-    if (useMarkdown) {
-      if (usage) {
-        lines.push(`- **${folder.name}** — ${usage}`);
-      } else {
-        lines.push(`- **${folder.name}**`);
-      }
-    } else {
-      const name = isLeaf
-        ? `\x1b[1;33m${folder.name}\x1b[0m`
-        : `\x1b[1;36m${folder.name}\x1b[0m`;
-      if (usage) {
-        const tag = isLeaf ? "" : ` \x1b[90m[...]\x1b[0m`;
-        lines.push(`${name}${tag} — ${usage}`);
-      } else {
-        lines.push(`${name}`);
-      }
-    }
+    children.push({
+      name: folder.name,
+      path: folder.path_lower ?? folder.path_display,
+      usage: ownUsage || tplUsage,
+      usageSource: ownUsage ? "own" : tplUsage ? "template" : null,
+      leaf,
+      ignore,
+      hasMetadata: !!group,
+      appliedTemplate: folderAppliedTemplate,
+    });
   }
 
-  if (lines.length === 0) {
+  return {
+    path: folderPath || "/",
+    appliedTemplate: appliedTemplateName || undefined,
+    children,
+  };
+}
+
+interface ListOptions {
+  markdown?: boolean;
+}
+
+export async function listMetadata(
+  folderPath: string,
+  options: ListOptions = {},
+) {
+  const result = await listFolderData(folderPath);
+  const visibleChildren = result.children.filter((c) => !c.ignore);
+
+  if (visibleChildren.length === 0) {
     console.log("No non-ignored folders found.");
     return;
+  }
+
+  const useMarkdown = options.markdown || !process.stdout.isTTY;
+  const lines: string[] = [];
+
+  for (const child of visibleChildren) {
+    if (useMarkdown) {
+      lines.push(child.usage ? `- **${child.name}** — ${child.usage}` : `- **${child.name}**`);
+    } else {
+      const name = child.leaf
+        ? `\x1b[1;33m${child.name}\x1b[0m`
+        : `\x1b[1;36m${child.name}\x1b[0m`;
+      if (child.usage) {
+        const tag = child.leaf ? "" : ` \x1b[90m[...]\x1b[0m`;
+        lines.push(`${name}${tag} — ${child.usage}`);
+      } else {
+        lines.push(name);
+      }
+    }
   }
 
   console.log(lines.join("\n"));

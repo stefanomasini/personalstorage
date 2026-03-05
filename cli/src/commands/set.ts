@@ -4,7 +4,7 @@ import { FIELD_STORAGE_USAGE, FIELD_STORAGE_IGNORE, FIELD_STORAGE_LEAF, FIELD_ST
 import { fetchExistingTemplates, getParentPath, type Templates } from "../metadata.js";
 import type { file_properties } from "dropbox/types/dropbox_types.js";
 
-interface SetOptions {
+export interface SetOptions {
   usage?: string;
   ignore?: boolean;
   leaf?: boolean;
@@ -14,7 +14,7 @@ interface SetOptions {
   applyTemplate?: string | boolean;
 }
 
-export async function setMetadata(filePath: string, options: SetOptions) {
+export async function applyMetadata(filePath: string, options: SetOptions): Promise<file_properties.PropertyField[]> {
   const dbx = getClient();
   const templateId = getTemplateId();
 
@@ -42,8 +42,7 @@ export async function setMetadata(filePath: string, options: SetOptions) {
 
     if (options.template) {
       if (options.template.length !== 3) {
-        console.error("--template requires exactly 3 arguments: <name> <subfolder> <usage>");
-        process.exit(1);
+        throw new Error("--template requires exactly 3 arguments: <name> <subfolder> <usage>");
       }
       const [name, subfolder, usage] = options.template;
       if (!templates[name]) templates[name] = {};
@@ -53,21 +52,18 @@ export async function setMetadata(filePath: string, options: SetOptions) {
     if (options.removeTemplate) {
       const name = options.removeTemplate;
       if (!templates[name]) {
-        console.error(`Template "${name}" not found.`);
-        process.exit(1);
+        throw new Error(`Template "${name}" not found.`);
       }
       delete templates[name];
     }
 
     if (options.removeTemplateEntry) {
       if (options.removeTemplateEntry.length !== 2) {
-        console.error("--remove-template-entry requires exactly 2 arguments: <name> <subfolder>");
-        process.exit(1);
+        throw new Error("--remove-template-entry requires exactly 2 arguments: <name> <subfolder>");
       }
       const [name, subfolder] = options.removeTemplateEntry;
       if (!templates[name]?.[subfolder]) {
-        console.error(`Template entry "${name}/${subfolder}" not found.`);
-        process.exit(1);
+        throw new Error(`Template entry "${name}/${subfolder}" not found.`);
       }
       delete templates[name][subfolder];
       if (Object.keys(templates[name]).length === 0) {
@@ -84,15 +80,13 @@ export async function setMetadata(filePath: string, options: SetOptions) {
     const parentPath = getParentPath(filePath);
     const parentTemplates = await fetchExistingTemplates(parentPath);
     if (!parentTemplates[options.applyTemplate]) {
-      console.error(`Template "${options.applyTemplate}" not found on parent folder "${parentPath || "/"}".`);
-      process.exit(1);
+      throw new Error(`Template "${options.applyTemplate}" not found on parent folder "${parentPath || "/"}".`);
     }
     fields.push({ name: FIELD_STORAGE_APPLIED_TEMPLATE, value: options.applyTemplate });
   }
 
   if (fields.length === 0) {
-    console.error("No properties specified. Use --usage, --ignore/--no-ignore, --leaf/--no-leaf, --template, or --apply-template.");
-    process.exit(1);
+    throw new Error("No properties specified. Use --usage, --ignore/--no-ignore, --leaf/--no-leaf, --template, or --apply-template.");
   }
 
   const propertyGroup: file_properties.PropertyGroup = {
@@ -126,19 +120,30 @@ export async function setMetadata(filePath: string, options: SetOptions) {
     }
   }
 
-  console.log(`Metadata set on ${filePath}`);
-  for (const f of fields) {
-    if (f.name === FIELD_STORAGE_TEMPLATES) {
-      const templates: Templates = JSON.parse(f.value);
-      console.log(`  ${f.name}:`);
-      for (const [name, subfolders] of Object.entries(templates)) {
-        console.log(`    ${name}:`);
-        for (const [sub, usage] of Object.entries(subfolders)) {
-          console.log(`      ${sub}: ${usage}`);
+  return fields;
+}
+
+export async function setMetadata(filePath: string, options: SetOptions) {
+  try {
+    const fields = await applyMetadata(filePath, options);
+
+    console.log(`Metadata set on ${filePath}`);
+    for (const f of fields) {
+      if (f.name === FIELD_STORAGE_TEMPLATES) {
+        const templates: Templates = JSON.parse(f.value);
+        console.log(`  ${f.name}:`);
+        for (const [name, subfolders] of Object.entries(templates)) {
+          console.log(`    ${name}:`);
+          for (const [sub, usage] of Object.entries(subfolders)) {
+            console.log(`      ${sub}: ${usage}`);
+          }
         }
+      } else {
+        console.log(`  ${f.name}: ${f.value}`);
       }
-    } else {
-      console.log(`  ${f.name}: ${f.value}`);
     }
+  } catch (err: any) {
+    console.error(err.message);
+    process.exit(1);
   }
 }

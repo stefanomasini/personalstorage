@@ -5,6 +5,7 @@ import { setMetadata } from "./commands/set.js";
 import { getMetadata } from "./commands/get.js";
 import { listMetadata } from "./commands/list.js";
 import { checkMetadata } from "./commands/check.js";
+import { startLiveServer } from "./commands/live.js";
 
 function normalizePath(p: string): string {
   return p === "/" ? "" : p;
@@ -70,6 +71,14 @@ program
   .option("--verbose", "Print each API call to stderr")
   .action(async (options: { markdown?: boolean; verbose?: boolean }) => {
     await checkMetadata(options);
+  });
+
+program
+  .command("live")
+  .description("Start a web UI for browsing and editing metadata")
+  .option("--port <number>", "Port to listen on", "3141")
+  .action(async (options: { port: string }) => {
+    await startLiveServer(parseInt(options.port, 10));
   });
 
 program.parseAsync().catch((err) => {
