@@ -1,5 +1,6 @@
 import { getClient } from "../dropbox.js";
 import { getTemplateId } from "../template-id.js";
+import { FIELD_STORAGE_TEMPLATES } from "../template.js";
 
 export async function getMetadata(filePath: string) {
   const dbx = getClient();
@@ -29,6 +30,21 @@ export async function getMetadata(filePath: string) {
 
   console.log(`Metadata for ${filePath}:`);
   for (const field of group.fields) {
-    console.log(`  ${field.name}: ${field.value}`);
+    if (field.name === FIELD_STORAGE_TEMPLATES && field.value) {
+      try {
+        const templates = JSON.parse(field.value);
+        console.log(`  ${field.name}:`);
+        for (const [name, subfolders] of Object.entries(templates)) {
+          console.log(`    ${name}:`);
+          for (const [sub, usage] of Object.entries(subfolders as Record<string, string>)) {
+            console.log(`      ${sub}: ${usage}`);
+          }
+        }
+      } catch {
+        console.log(`  ${field.name}: ${field.value}`);
+      }
+    } else {
+      console.log(`  ${field.name}: ${field.value}`);
+    }
   }
 }

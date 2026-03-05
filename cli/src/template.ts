@@ -6,6 +6,7 @@ export const TEMPLATE_DESCRIPTION = "Custom metadata for personal storage manage
 export const FIELD_STORAGE_USAGE = "storage_usage";
 export const FIELD_STORAGE_IGNORE = "storage_ignore";
 export const FIELD_STORAGE_LEAF = "storage_leaf";
+export const FIELD_STORAGE_TEMPLATES = "storage_templates";
 
 export const TEMPLATE_FIELDS: file_properties.PropertyFieldTemplate[] = [
   {
@@ -21,6 +22,11 @@ export const TEMPLATE_FIELDS: file_properties.PropertyFieldTemplate[] = [
   {
     name: FIELD_STORAGE_LEAF,
     description: "Whether this folder is a leaf node (true/false)",
+    type: { ".tag": "string" },
+  },
+  {
+    name: FIELD_STORAGE_TEMPLATES,
+    description: "JSON object of folder templates (name -> subfolder -> usage)",
     type: { ".tag": "string" },
   },
 ];
