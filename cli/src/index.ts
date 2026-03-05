@@ -9,6 +9,12 @@ import { startLiveServer } from "./commands/live.js";
 import { analyzeFile } from "./commands/analyze.js";
 
 function normalizePath(p: string): string {
+  const segments = p.split("/");
+  const idx = segments.indexOf("Dropbox");
+  if (idx !== -1) {
+    const relative = segments.slice(idx + 1).join("/");
+    p = relative ? "/" + relative : "";
+  }
   return p === "/" ? "" : p;
 }
 
