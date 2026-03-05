@@ -20,6 +20,8 @@ Set metadata on a Dropbox path.
 ./storage-cli set /some/folder --template mytemplate Docs "Documentation files"
 ./storage-cli set /some/folder --remove-template mytemplate
 ./storage-cli set /some/folder --remove-template-entry mytemplate Docs
+./storage-cli set /Projects/Alpha --apply-template standard
+./storage-cli set /Projects/Alpha --no-apply-template
 ```
 
 | Option                                       | Description                             |
@@ -32,6 +34,8 @@ Set metadata on a Dropbox path.
 | `--template <name> <subfolder> <usage>`      | Add a template entry                    |
 | `--remove-template <name>`                   | Remove an entire template               |
 | `--remove-template-entry <name> <subfolder>` | Remove a subfolder from a template      |
+| `--apply-template <name>`                    | Apply a template from the parent folder |
+| `--no-apply-template`                        | Remove the applied template             |
 
 ### Templates
 
@@ -46,7 +50,16 @@ A template is defined on a folder with a name and a set of entries, where each e
 ./storage-cli set /Projects --template standard Assets "Media and design assets"
 ```
 
-This template can be applied to `/Projects/Alpha` and `/Projects/Beta`, so both get the same usage descriptions for `Docs` and `Assets` without setting them individually.
+To apply the template to a child folder:
+
+```bash
+./storage-cli set /Projects/Alpha --apply-template standard
+./storage-cli set /Projects/Beta --apply-template standard
+```
+
+When `list /Projects/Alpha` is called, the template is looked up from the parent (`/Projects`), and children of `Alpha` matching template subfolders (`Docs`, `Assets`) automatically show the template's usage strings. A child's own `--usage` takes precedence over the template.
+
+The `check` command also respects applied templates: children matching template subfolders are treated as annotated. If a child has its own usage that differs from the template, `check` reports the inconsistency.
 
 ## `get <path>`
 
@@ -71,7 +84,7 @@ List child folders with their usage metadata.
 
 ## `check`
 
-Find terminal folders not marked as leaf.
+Find terminal folders not marked as leaf. Use this tool to identify folders that may need metadata updates.
 
 ```bash
 ./storage-cli check

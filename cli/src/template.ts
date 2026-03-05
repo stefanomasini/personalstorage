@@ -7,6 +7,7 @@ export const FIELD_STORAGE_USAGE = "storage_usage";
 export const FIELD_STORAGE_IGNORE = "storage_ignore";
 export const FIELD_STORAGE_LEAF = "storage_leaf";
 export const FIELD_STORAGE_TEMPLATES = "storage_templates";
+export const FIELD_STORAGE_APPLIED_TEMPLATE = "storage_applied_template";
 
 export const TEMPLATE_FIELDS: file_properties.PropertyFieldTemplate[] = [
   {
@@ -27,6 +28,11 @@ export const TEMPLATE_FIELDS: file_properties.PropertyFieldTemplate[] = [
   {
     name: FIELD_STORAGE_TEMPLATES,
     description: "JSON object of folder templates (name -> subfolder -> usage)",
+    type: { ".tag": "string" },
+  },
+  {
+    name: FIELD_STORAGE_APPLIED_TEMPLATE,
+    description: "Name of the template applied from parent folder",
     type: { ".tag": "string" },
   },
 ];

@@ -1,6 +1,7 @@
 import { getClient } from "../dropbox.js";
 import { getTemplateId } from "../template-id.js";
-import { FIELD_STORAGE_USAGE, FIELD_STORAGE_IGNORE, FIELD_STORAGE_LEAF, FIELD_STORAGE_TEMPLATES } from "../template.js";
+import { FIELD_STORAGE_USAGE, FIELD_STORAGE_IGNORE, FIELD_STORAGE_LEAF, FIELD_STORAGE_TEMPLATES, FIELD_STORAGE_APPLIED_TEMPLATE } from "../template.js";
+import { fetchExistingTemplates, getParentPath, type Templates } from "../metadata.js";
 import type { file_properties } from "dropbox/types/dropbox_types.js";
 
 interface SetOptions {
@@ -10,35 +11,7 @@ interface SetOptions {
   template?: string[];
   removeTemplate?: string;
   removeTemplateEntry?: string[];
-}
-
-type Templates = Record<string, Record<string, string>>;
-
-async function fetchExistingTemplates(filePath: string): Promise<Templates> {
-  const dbx = getClient();
-  const templateId = getTemplateId();
-
-  try {
-    const response = await (dbx as any).filesGetMetadata({
-      path: filePath,
-      include_property_groups: {
-        ".tag": "filter_some",
-        filter_some: [templateId],
-      },
-    });
-
-    const group = response.result.property_groups?.find(
-      (g: any) => g.template_id === templateId
-    );
-    if (!group) return {};
-
-    const field = group.fields.find((f: any) => f.name === FIELD_STORAGE_TEMPLATES);
-    if (!field?.value) return {};
-
-    return JSON.parse(field.value);
-  } catch {
-    return {};
-  }
+  applyTemplate?: string | boolean;
 }
 
 export async function setMetadata(filePath: string, options: SetOptions) {
@@ -105,8 +78,20 @@ export async function setMetadata(filePath: string, options: SetOptions) {
     fields.push({ name: FIELD_STORAGE_TEMPLATES, value: JSON.stringify(templates) });
   }
 
+  if (options.applyTemplate === false) {
+    fields.push({ name: FIELD_STORAGE_APPLIED_TEMPLATE, value: "" });
+  } else if (typeof options.applyTemplate === "string") {
+    const parentPath = getParentPath(filePath);
+    const parentTemplates = await fetchExistingTemplates(parentPath);
+    if (!parentTemplates[options.applyTemplate]) {
+      console.error(`Template "${options.applyTemplate}" not found on parent folder "${parentPath || "/"}".`);
+      process.exit(1);
+    }
+    fields.push({ name: FIELD_STORAGE_APPLIED_TEMPLATE, value: options.applyTemplate });
+  }
+
   if (fields.length === 0) {
-    console.error("No properties specified. Use --usage, --ignore/--no-ignore, --leaf/--no-leaf, or --template.");
+    console.error("No properties specified. Use --usage, --ignore/--no-ignore, --leaf/--no-leaf, --template, or --apply-template.");
     process.exit(1);
   }
 

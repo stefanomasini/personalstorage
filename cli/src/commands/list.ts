@@ -4,7 +4,9 @@ import {
   FIELD_STORAGE_USAGE,
   FIELD_STORAGE_IGNORE,
   FIELD_STORAGE_LEAF,
+  FIELD_STORAGE_APPLIED_TEMPLATE,
 } from "../template.js";
+import { fetchExistingTemplates, fetchFieldValue, getParentPath } from "../metadata.js";
 
 interface ListOptions {
   markdown?: boolean;
@@ -38,6 +40,15 @@ export async function listMetadata(
     .filter((e: any) => e[".tag"] === "folder")
     .sort((a: any, b: any) => a.name.localeCompare(b.name));
 
+  // Resolve applied template if present
+  const appliedTemplateName = await fetchFieldValue(folderPath, FIELD_STORAGE_APPLIED_TEMPLATE);
+  let templateEntries: Record<string, string> = {};
+  if (appliedTemplateName && appliedTemplateName !== "") {
+    const parentPath = getParentPath(folderPath);
+    const parentTemplates = await fetchExistingTemplates(parentPath);
+    templateEntries = parentTemplates[appliedTemplateName] ?? {};
+  }
+
   const lines: string[] = [];
   for (const folder of folders) {
     const group = folder.property_groups?.find(
@@ -53,17 +64,20 @@ export async function listMetadata(
     const useMarkdown = options.markdown || !process.stdout.isTTY;
 
     if (!group) {
+      const tplUsage = templateEntries[folder.name];
       if (useMarkdown) {
-        lines.push(`- **${folder.name}**`);
+        lines.push(tplUsage ? `- **${folder.name}** — ${tplUsage}` : `- **${folder.name}**`);
       } else {
-        lines.push(`\x1b[1;36m${folder.name}\x1b[0m`);
+        const name = `\x1b[1;36m${folder.name}\x1b[0m`;
+        lines.push(tplUsage ? `${name} — ${tplUsage}` : name);
       }
       continue;
     }
 
-    const usage = fields.find(
+    const ownUsage = fields.find(
       (f: any) => f.name === FIELD_STORAGE_USAGE,
     )?.value;
+    const usage = ownUsage || templateEntries[folder.name];
     const leaf = fields.find((f: any) => f.name === FIELD_STORAGE_LEAF)?.value;
     const isLeaf = leaf === "true";
     if (useMarkdown) {

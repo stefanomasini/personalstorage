@@ -42,7 +42,9 @@ program
   .option("--template <args...>", "Add a template entry (name subfolder usage)")
   .option("--remove-template <name>", "Remove an entire template")
   .option("--remove-template-entry <args...>", "Remove a subfolder from a template (name subfolder)")
-  .action(async (filePath: string, options: { usage?: string; ignore?: boolean; leaf?: boolean; template?: string[]; removeTemplate?: string; removeTemplateEntry?: string[] }) => {
+  .option("--apply-template <name>", "Apply a template from the parent folder")
+  .option("--no-apply-template", "Remove the applied template")
+  .action(async (filePath: string, options: { usage?: string; ignore?: boolean; leaf?: boolean; template?: string[]; removeTemplate?: string; removeTemplateEntry?: string[]; applyTemplate?: string | boolean }) => {
     await setMetadata(normalizePath(filePath), options);
   });
 
