@@ -4,6 +4,11 @@ import { initTemplate } from "./commands/init.js";
 import { setMetadata } from "./commands/set.js";
 import { getMetadata } from "./commands/get.js";
 import { listMetadata } from "./commands/list.js";
+import { checkMetadata } from "./commands/check.js";
+
+function normalizePath(p: string): string {
+  return p === "/" ? "" : p;
+}
 
 const program = new Command();
 
@@ -35,14 +40,14 @@ program
   .option("--leaf", "Mark folder as a leaf node")
   .option("--no-leaf", "Unmark folder as leaf")
   .action(async (filePath: string, options: { usage?: string; ignore?: boolean; leaf?: boolean }) => {
-    await setMetadata(filePath, options);
+    await setMetadata(normalizePath(filePath), options);
   });
 
 program
   .command("get <path>")
   .description("Get metadata for a Dropbox path")
   .action(async (filePath: string) => {
-    await getMetadata(filePath);
+    await getMetadata(normalizePath(filePath));
   });
 
 program
@@ -50,7 +55,24 @@ program
   .description("List child folders and their usage")
   .option("--markdown", "Force markdown output (default when not a TTY)")
   .action(async (folderPath: string, options: { markdown?: boolean }) => {
-    await listMetadata(folderPath, options);
+    await listMetadata(normalizePath(folderPath), options);
   });
 
-program.parse();
+program
+  .command("check")
+  .description("Find terminal folders not marked as leaf")
+  .option("--markdown", "Force markdown output (default when not a TTY)")
+  .option("--verbose", "Print each API call to stderr")
+  .action(async (options: { markdown?: boolean; verbose?: boolean }) => {
+    await checkMetadata(options);
+  });
+
+program.parseAsync().catch((err) => {
+  if (err?.status && err?.error) {
+    const summary = err.error?.error_summary ?? "unknown error";
+    console.error(`\x1b[1;31mDropbox API error:\x1b[0m ${summary}`);
+    process.exit(1);
+  }
+  console.error(`\x1b[1;31mError:\x1b[0m ${err.message ?? err}`);
+  process.exit(1);
+});
