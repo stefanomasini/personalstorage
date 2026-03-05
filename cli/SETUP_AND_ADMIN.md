@@ -14,7 +14,7 @@
 
 ## 2. Store App Credentials
 
-Use `wellkept` to store the following environment variables in `personalstorage`:
+Securely store the following environment variables in (`personalstorage` key in wellkept):
 
 ```bash
 DROPBOX_APP_KEY
@@ -30,8 +30,6 @@ DROPBOX_APP_SECRET
 This opens an OAuth flow: follow the URL, authorize, paste the code back. You'll get a long-lived refresh token.
 
 ## 4. Store the Refresh Token
-
-In wellkept:
 
 ```bash
 DROPBOX_REFRESH_TOKEN

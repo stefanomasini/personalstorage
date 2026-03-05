@@ -1,5 +1,12 @@
 # Usage
 
+All commands are run from the `cli/` directory using the `./storage-cli` wrapper, which loads credentials automatically via `wellkept`:
+
+```bash
+cd cli
+./storage-cli <command> [options]
+```
+
 ## `set <path>`
 
 Set metadata on a Dropbox path.

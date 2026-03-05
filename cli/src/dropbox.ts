@@ -8,7 +8,7 @@ export function getClient(): Dropbox {
   if (!refreshToken || !clientId || !clientSecret) {
     console.error(
       "Missing environment variables. Required: DROPBOX_REFRESH_TOKEN, DROPBOX_APP_KEY, DROPBOX_APP_SECRET.\n" +
-      "Run `storage-cli auth` to obtain a refresh token, then store all three in envchain."
+        "Run `storage-cli auth` to obtain a refresh token, then securely store all three.",
     );
     process.exit(1);
   }
