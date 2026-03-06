@@ -3,11 +3,11 @@ import path from 'node:path';
 import { getClient } from '../dropbox.js';
 import { getTemplateId } from '../template-id.js';
 import { fetchFieldValue } from '../metadata.js';
-import { FIELD_DOCUMENT_CONTENTS_PREFIX, DOCUMENT_CONTENTS_FIELD_COUNT, DOCUMENT_CONTENTS_CHUNK_SIZE } from '../template.js';
+import { FIELD_DOCUMENT_CONTENTS_PREFIX, FIELD_DOCUMENT_LOCATION, DOCUMENT_CONTENTS_FIELD_COUNT, DOCUMENT_CONTENTS_CHUNK_SIZE } from '../template.js';
 import { askClaude } from '../claude-adapter.js';
 import { runWithProgress, type ProcessResult } from '../progress.js';
 import { toDropboxPath, collectFiles, shortName } from '../files.js';
-import { decideLocation } from './decide-location.js';
+import { decideLocationForDropboxPath, storeLocationMetadata } from './decide-location.js';
 
 const PROMPT = `Analyze the file provided and return ONLY a JSON object (no markdown fences, no extra text) with these fields:
 - "name": a short description (a handful of words) of what this file is. Don't state the obvious — for example, if it's an image, don't start with "image of...". If you can determine a meaningful date from the document content (e.g. signature date, invoice date, statement period, publication date — anything that accurately locates the document in time), prefix the name with that date followed by a space, dash and space. Use the format YYYY-MM-DD, or YYYY-MM if only month precision is available, or YYYY if only the year. If no reliable date can be extracted from the content, check the original filename for a date and use that instead. If no date can be determined at all, omit the prefix. Only use filesystem friendly characters, so avoid accents and puntuation.
@@ -97,25 +97,16 @@ export async function analyze(localPath: string, options: AnalyzeOptions) {
     // Single file: simple output
     if (files.length === 1) {
         const dropboxPath = toDropboxPath(files[0]);
-        if (!options.force) {
-            const existing = await fetchFieldValue(dropboxPath, `${FIELD_DOCUMENT_CONTENTS_PREFIX}1`);
-            if (existing) {
-                console.log(`${GREEN}✓${RESET} Already analyzed: ${dropboxPath}`);
-                if (options.decideLocation) {
-                    await decideLocation(localPath, { force: options.force, concurrency: options.concurrency });
-                }
-                return;
-            }
-        }
         try {
-            await analyzeFile(files[0]);
-            console.log(`${GREEN}✓${RESET} ${dropboxPath}`);
+            const result = await processFile(files[0], options);
+            if (result === 'skipped') {
+                console.log(`${GREEN}✓${RESET} Already processed: ${dropboxPath}`);
+            } else {
+                console.log(`${GREEN}✓${RESET} ${dropboxPath}`);
+            }
         } catch (err) {
             console.error(err);
             process.exit(1);
-        }
-        if (options.decideLocation) {
-            await decideLocation(localPath, { force: options.force, concurrency: options.concurrency });
         }
         return;
     }
@@ -127,25 +118,44 @@ export async function analyze(localPath: string, options: AnalyzeOptions) {
         labelFn: shortName,
         concurrency: options.concurrency,
         async processItem(file): Promise<ProcessResult> {
-            const dropboxPath = toDropboxPath(file);
-
-            if (!options.force) {
-                const existing = await fetchFieldValue(dropboxPath, `${FIELD_DOCUMENT_CONTENTS_PREFIX}1`);
-                if (existing) {
-                    return { state: 'skipped' };
-                }
-            }
-
             try {
-                await analyzeFile(file);
-                return { state: 'done' };
+                const result = await processFile(file, options);
+                return { state: result === 'skipped' ? 'skipped' : 'done' };
             } catch {
                 return { state: 'error' };
             }
         },
     });
+}
 
-    if (options.decideLocation) {
-        await decideLocation(localPath, { force: options.force, concurrency: options.concurrency });
+async function processFile(localPath: string, options: AnalyzeOptions): Promise<'done' | 'skipped'> {
+    const absolute = path.resolve(localPath);
+    const dropboxPath = toDropboxPath(absolute);
+
+    let didAnalyze = false;
+    const hasAnalysis = await fetchFieldValue(dropboxPath, `${FIELD_DOCUMENT_CONTENTS_PREFIX}1`);
+
+    if (!hasAnalysis || options.force) {
+        await analyzeFile(localPath);
+        didAnalyze = true;
     }
+
+    if (!options.decideLocation) {
+        return didAnalyze ? 'done' : 'skipped';
+    }
+
+    if (didAnalyze) {
+        const location = await decideLocationForDropboxPath(dropboxPath);
+        await storeLocationMetadata(dropboxPath, location);
+    } else {
+        const hasLocation = await fetchFieldValue(dropboxPath, FIELD_DOCUMENT_LOCATION);
+        if (!hasLocation || options.force) {
+            const location = await decideLocationForDropboxPath(dropboxPath);
+            await storeLocationMetadata(dropboxPath, location);
+        } else {
+            return 'skipped';
+        }
+    }
+
+    return 'done';
 }
