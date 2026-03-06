@@ -7,7 +7,8 @@
     "storage-cli": "./storage-cli"
   },
   "scripts": {
-    "cli": "tsx src/index.ts"
+    "cli": "tsx src/index.ts",
+    "format": "prettier --write 'src/**/*.ts'"
   },
   "dependencies": {
     "commander": "^13.1.0",
@@ -15,6 +16,7 @@
   },
   "devDependencies": {
     "@types/node": "^22.13.0",
+    "prettier": "^3.8.1",
     "tsx": "^4.19.0",
     "typescript": "^5.7.0"
   }
