@@ -49,6 +49,17 @@ export function LiveApp() {
                         files={files}
                         onBack={() => setView({ kind: 'folder' })}
                         onNavigateFile={(f) => setView({ kind: 'file', file: f })}
+                        onFileMoved={(movedFile) => {
+                            const remaining = files.filter((f) => f.path !== movedFile.path);
+                            if (remaining.length === 0) {
+                                setView({ kind: 'folder' });
+                            } else {
+                                const idx = files.findIndex((f) => f.path === movedFile.path);
+                                const next = remaining[Math.min(idx, remaining.length - 1)];
+                                setView({ kind: 'file', file: next });
+                            }
+                            navigateTo(currentPath || '/');
+                        }}
                     />
                 )}
             </div>

@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import { ArrowLeft, ChevronLeft, ChevronRight, Sparkles, Loader2 } from 'lucide-react';
+import { ArrowLeft, ChevronLeft, ChevronRight, Sparkles, Loader2, FolderInput } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { api } from '@/lib/api';
 import type { FileEntry } from '@/hooks/use-folder-navigation';
@@ -13,12 +14,15 @@ interface FileDetailViewProps {
     files: FileEntry[];
     onBack: () => void;
     onNavigateFile: (file: FileEntry) => void;
+    onFileMoved: (movedFile: FileEntry) => void;
 }
 
-export function FileDetailView({ file, files, onBack, onNavigateFile }: FileDetailViewProps) {
+export function FileDetailView({ file, files, onBack, onNavigateFile, onFileMoved }: FileDetailViewProps) {
     const [metadata, setMetadata] = useState<Record<string, string> | null>(null);
     const [loading, setLoading] = useState(true);
     const [suggesting, setSuggesting] = useState(false);
+    const [editedLocation, setEditedLocation] = useState('');
+    const [moving, setMoving] = useState(false);
 
     const currentIndex = files.findIndex((f) => f.path === file.path);
     const hasPrev = currentIndex > 0;
@@ -27,7 +31,10 @@ export function FileDetailView({ file, files, onBack, onNavigateFile }: FileDeta
     useEffect(() => {
         setLoading(true);
         api<Record<string, string>>('/api/get?path=' + encodeURIComponent(file.path))
-            .then(setMetadata)
+            .then((data) => {
+                setMetadata(data);
+                if (data?.document_location) setEditedLocation(data.document_location);
+            })
             .catch(() => setMetadata(null))
             .finally(() => setLoading(false));
     }, [file.path]);
@@ -94,7 +101,39 @@ export function FileDetailView({ file, files, onBack, onNavigateFile }: FileDeta
                                 <CardTitle className="text-base">Suggested Location</CardTitle>
                             </CardHeader>
                             <CardContent>
-                                <code className="text-sm bg-muted px-2 py-1 rounded">{documentLocation}</code>
+                                <div className="flex items-center gap-2">
+                                    <Input
+                                        value={editedLocation}
+                                        onChange={(e) => setEditedLocation(e.target.value)}
+                                        className="font-mono text-sm"
+                                    />
+                                    <Button
+                                        size="sm"
+                                        disabled={moving || !editedLocation.trim()}
+                                        onClick={async () => {
+                                            setMoving(true);
+                                            try {
+                                                await api('/api/move-file', {
+                                                    method: 'POST',
+                                                    headers: { 'Content-Type': 'application/json' },
+                                                    body: JSON.stringify({ from_path: file.path, to_path: editedLocation.trim() }),
+                                                });
+                                                onFileMoved(file);
+                                            } catch {
+                                                // ignore
+                                            } finally {
+                                                setMoving(false);
+                                            }
+                                        }}
+                                    >
+                                        {moving ? (
+                                            <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                                        ) : (
+                                            <FolderInput className="h-4 w-4 mr-1" />
+                                        )}
+                                        Move
+                                    </Button>
+                                </div>
                             </CardContent>
                         </Card>
                     ) : metadata?.document_contents ? (
@@ -111,6 +150,7 @@ export function FileDetailView({ file, files, onBack, onNavigateFile }: FileDeta
                                         body: JSON.stringify({ path: file.path }),
                                     });
                                     setMetadata((prev) => prev ? { ...prev, document_location: res.location } : prev);
+                                    setEditedLocation(res.location);
                                 } catch {
                                     // ignore
                                 } finally {

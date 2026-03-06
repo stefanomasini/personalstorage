@@ -108,6 +108,23 @@ export async function startLiveServer(port: number) {
                 return;
             }
 
+            if (method === 'POST' && url === '/api/move-file') {
+                const body = await readBody(req);
+                const payload = JSON.parse(body);
+                const fromPath = normalizePath(payload.from_path);
+                const toPath = normalizePath(payload.to_path);
+                console.log(`[move-file] from: ${fromPath} → to: ${toPath}`);
+                try {
+                    const dbx = getClient();
+                    await dbx.filesMoveV2({ from_path: fromPath, to_path: toPath });
+                    jsonResponse(res, 200, { ok: true });
+                } catch (moveErr: any) {
+                    console.error('[move-file] error:', JSON.stringify(moveErr?.error ?? moveErr, null, 2));
+                    throw moveErr;
+                }
+                return;
+            }
+
             if (method === 'POST' && url === '/api/decide-location') {
                 const body = await readBody(req);
                 const payload = JSON.parse(body);
