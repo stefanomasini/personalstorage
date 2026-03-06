@@ -102,8 +102,13 @@ export async function analyze(localPath: string, options: AnalyzeOptions) {
                 return;
             }
         }
-        await analyzeFile(files[0]);
-        console.log(`${GREEN}✓${RESET} ${dropboxPath}`);
+        try {
+            await analyzeFile(files[0]);
+            console.log(`${GREEN}✓${RESET} ${dropboxPath}`);
+        } catch (err) {
+            console.error(err);
+            process.exit(1);
+        }
         return;
     }
 

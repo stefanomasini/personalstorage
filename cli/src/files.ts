@@ -17,13 +17,17 @@ export function toDropboxPath(localPath: string): string {
 
 export function collectFiles(dir: string): string[] {
     const results: string[] = [];
-    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
-        if (entry.name.startsWith('.')) continue;
-        const full = path.join(dir, entry.name);
-        if (entry.isDirectory()) {
-            results.push(...collectFiles(full));
-        } else if (entry.isFile()) {
-            results.push(full);
+    const queue: string[] = [dir];
+    while (queue.length > 0) {
+        const current = queue.shift()!;
+        for (const entry of fs.readdirSync(current, { withFileTypes: true })) {
+            if (entry.name.startsWith('.')) continue;
+            const full = path.join(current, entry.name);
+            if (entry.isDirectory()) {
+                queue.push(full);
+            } else if (entry.isFile()) {
+                results.push(full);
+            }
         }
     }
     return results;
