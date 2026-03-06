@@ -11,8 +11,17 @@ export interface FolderEntry {
     appliedTemplate?: string;
 }
 
+export interface FileEntry {
+    name: string;
+    path: string;
+    hasMetadata: boolean;
+    hasAnalysis: boolean;
+    hasLocation: boolean;
+}
+
 interface ListData {
     children: FolderEntry[];
+    files: FileEntry[];
 }
 
 type Templates = Record<string, Record<string, string>>;
@@ -52,12 +61,15 @@ export function useFolderNavigation() {
         setSelectedEntry(null);
     }, []);
 
+    const files = listData?.files ?? [];
+
     return {
         currentPath,
         listData,
         templates,
         selectedEntry,
         loading,
+        files,
         navigateTo,
         selectFolder,
         deselectFolder,

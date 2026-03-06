@@ -1,17 +1,27 @@
-import { useEffect } from 'react';
-import { useFolderNavigation } from '@/hooks/use-folder-navigation';
+import { useEffect, useState } from 'react';
+import { useFolderNavigation, type FileEntry } from '@/hooks/use-folder-navigation';
 import { BreadcrumbNav } from '@/components/breadcrumb-nav';
 import { FolderTable } from '@/components/folder-table';
+import { FileList } from '@/components/file-list';
+import { FileDetailView } from '@/components/file-detail-view';
 import { MetadataEditor } from '@/components/metadata-editor';
 import { TemplateManager } from '@/components/template-manager';
 import { Sheet } from '@/components/ui/sheet';
 
+type View = { kind: 'folder' } | { kind: 'file'; file: FileEntry };
+
 export function LiveApp() {
-    const { currentPath, listData, templates, selectedEntry, loading, navigateTo, selectFolder, deselectFolder } = useFolderNavigation();
+    const { currentPath, listData, templates, selectedEntry, loading, files, navigateTo, selectFolder, deselectFolder } = useFolderNavigation();
+    const [view, setView] = useState<View>({ kind: 'folder' });
 
     useEffect(() => {
         navigateTo('/');
     }, [navigateTo]);
+
+    // Reset to folder view when navigating to a new folder
+    useEffect(() => {
+        setView({ kind: 'folder' });
+    }, [currentPath]);
 
     return (
         <div className="min-h-screen">
@@ -21,14 +31,26 @@ export function LiveApp() {
             </header>
 
             <div className="max-w-5xl mx-auto p-6 space-y-4">
-                <FolderTable
-                    entries={listData?.children ?? []}
-                    selectedPath={selectedEntry?.path}
-                    loading={loading}
-                    onNavigate={navigateTo}
-                    onSelect={selectFolder}
-                />
-                <TemplateManager path={currentPath} templates={templates} onChanged={() => navigateTo(currentPath || '/')} />
+                {view.kind === 'folder' ? (
+                    <>
+                        <FolderTable
+                            entries={listData?.children ?? []}
+                            selectedPath={selectedEntry?.path}
+                            loading={loading}
+                            onNavigate={navigateTo}
+                            onSelect={selectFolder}
+                        />
+                        <FileList files={files} onSelectFile={(f) => setView({ kind: 'file', file: f })} />
+                        <TemplateManager path={currentPath} templates={templates} onChanged={() => navigateTo(currentPath || '/')} />
+                    </>
+                ) : (
+                    <FileDetailView
+                        file={view.file}
+                        files={files}
+                        onBack={() => setView({ kind: 'folder' })}
+                        onNavigateFile={(f) => setView({ kind: 'file', file: f })}
+                    />
+                )}
             </div>
 
             <Sheet open={!!selectedEntry} onOpenChange={(open) => !open && deselectFolder()}>

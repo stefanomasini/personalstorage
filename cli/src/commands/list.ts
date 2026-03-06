@@ -1,6 +1,6 @@
 import { getClient } from '../dropbox.js';
 import { getTemplateId } from '../template-id.js';
-import { FIELD_STORAGE_USAGE, FIELD_STORAGE_IGNORE, FIELD_STORAGE_LEAF, FIELD_STORAGE_APPLIED_TEMPLATE } from '../template.js';
+import { FIELD_STORAGE_USAGE, FIELD_STORAGE_IGNORE, FIELD_STORAGE_LEAF, FIELD_STORAGE_APPLIED_TEMPLATE, FIELD_DOCUMENT_CONTENTS_PREFIX, FIELD_DOCUMENT_LOCATION } from '../template.js';
 import { fetchExistingTemplates, fetchFieldValue, getParentPath } from '../metadata.js';
 
 export interface FolderEntry {
@@ -14,10 +14,19 @@ export interface FolderEntry {
     appliedTemplate: string | undefined;
 }
 
+export interface FileEntry {
+    name: string;
+    path: string;
+    hasMetadata: boolean;
+    hasAnalysis: boolean;
+    hasLocation: boolean;
+}
+
 export interface ListResult {
     path: string;
     appliedTemplate: string | undefined;
     children: FolderEntry[];
+    files: FileEntry[];
 }
 
 export async function listFolderData(folderPath: string): Promise<ListResult> {
@@ -73,10 +82,29 @@ export async function listFolderData(folderPath: string): Promise<ListResult> {
         });
     }
 
+    const files = entries
+        .filter((e: any) => e['.tag'] === 'file')
+        .sort((a: any, b: any) => a.name.localeCompare(b.name));
+
+    const fileEntries: FileEntry[] = files.map((file: any) => {
+        const group = file.property_groups?.find((g: any) => g.template_id === templateId);
+        const fields = group?.fields ?? [];
+        const hasAnalysis = fields.some((f: any) => f.name.startsWith(FIELD_DOCUMENT_CONTENTS_PREFIX) && f.value);
+        const hasLocation = !!fields.find((f: any) => f.name === FIELD_DOCUMENT_LOCATION)?.value;
+        return {
+            name: file.name,
+            path: file.path_lower ?? file.path_display,
+            hasMetadata: !!group,
+            hasAnalysis,
+            hasLocation,
+        };
+    });
+
     return {
         path: folderPath || '/',
         appliedTemplate: appliedTemplateName || undefined,
         children,
+        files: fileEntries,
     };
 }
 
