@@ -6,20 +6,7 @@ import { fetchFieldValue } from '../metadata.js';
 import { FIELD_DOCUMENT_CONTENTS_PREFIX, DOCUMENT_CONTENTS_FIELD_COUNT, DOCUMENT_CONTENTS_CHUNK_SIZE } from '../template.js';
 import { askClaude } from '../claude-adapter.js';
 import { runWithProgress, type ProcessResult } from '../progress.js';
-
-function toDropboxPath(localPath: string): string {
-    const absolute = path.resolve(localPath);
-    const segments = absolute.split(path.sep);
-    const idx = segments.indexOf('Dropbox');
-    if (idx === -1) {
-        throw new Error(`Cannot find "Dropbox" in path: ${absolute}`);
-    }
-    const relative = segments.slice(idx + 1);
-    if (relative.length === 0) {
-        throw new Error('Path points to the Dropbox root, not a file.');
-    }
-    return '/' + relative.join('/');
-}
+import { toDropboxPath, collectFiles, shortName } from '../files.js';
 
 const PROMPT = `Analyze the file provided and return ONLY a JSON object (no markdown fences, no extra text) with these fields:
 - "name": a short description (a handful of words) of what this file is. Don't state the obvious — for example, if it's an image, don't start with "image of...". If you can determine a meaningful date from the document content (e.g. signature date, invoice date, statement period, publication date — anything that accurately locates the document in time), prefix the name with that date followed by a space, dash and space. Use the format YYYY-MM-DD, or YYYY-MM if only month precision is available, or YYYY if only the year. If no reliable date can be extracted from the content, check the original filename for a date and use that instead. If no date can be determined at all, omit the prefix. Only use filesystem friendly characters, so avoid accents and puntuation.
@@ -29,20 +16,6 @@ const PROMPT = `Analyze the file provided and return ONLY a JSON object (no mark
 Prefer the Italian language when analyzing documents in Italian, and English for documents in English or other languages. Use the original language only for words that don't translate well, like product names, organization names, specific jargon, etc.
 
 Return ONLY the JSON object.`;
-
-function collectFiles(dir: string): string[] {
-    const results: string[] = [];
-    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
-        if (entry.name.startsWith('.')) continue;
-        const full = path.join(dir, entry.name);
-        if (entry.isDirectory()) {
-            results.push(...collectFiles(full));
-        } else if (entry.isFile()) {
-            results.push(full);
-        }
-    }
-    return results;
-}
 
 async function analyzeFile(localPath: string) {
     const absolute = path.resolve(localPath);
@@ -100,14 +73,6 @@ async function analyzeFile(localPath: string) {
 
 const GREEN = '\x1b[32m';
 const RESET = '\x1b[0m';
-
-function shortName(filePath: string): string {
-    try {
-        return toDropboxPath(filePath);
-    } catch {
-        return path.basename(filePath);
-    }
-}
 
 interface AnalyzeOptions {
     force: boolean;

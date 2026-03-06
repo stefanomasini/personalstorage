@@ -8,6 +8,7 @@ export const FIELD_STORAGE_IGNORE = 'storage_ignore';
 export const FIELD_STORAGE_LEAF = 'storage_leaf';
 export const FIELD_STORAGE_TEMPLATES = 'storage_templates';
 export const FIELD_STORAGE_APPLIED_TEMPLATE = 'storage_applied_template';
+export const FIELD_DOCUMENT_LOCATION = 'document_location';
 export const FIELD_DOCUMENT_CONTENTS_PREFIX = 'document_contents_';
 export const DOCUMENT_CONTENTS_FIELD_COUNT = 10;
 export const DOCUMENT_CONTENTS_CHUNK_SIZE = 1024;
@@ -36,6 +37,11 @@ export const TEMPLATE_FIELDS: file_properties.PropertyFieldTemplate[] = [
     {
         name: FIELD_STORAGE_APPLIED_TEMPLATE,
         description: 'Name of the template applied from parent folder',
+        type: { '.tag': 'string' },
+    },
+    {
+        name: FIELD_DOCUMENT_LOCATION,
+        description: 'AI-decided destination path for this file',
         type: { '.tag': 'string' },
     },
     ...Array.from({ length: DOCUMENT_CONTENTS_FIELD_COUNT }, (_, i) => ({

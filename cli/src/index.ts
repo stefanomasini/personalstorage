@@ -8,6 +8,7 @@ import { checkMetadata } from './commands/check.js';
 import { startLiveServer } from './commands/live.js';
 import { analyze } from './commands/analyze.js';
 import { startMcpServer } from './commands/mcp.js';
+import { decideLocation } from './commands/decide-location.js';
 
 function normalizePath(p: string): string {
     const segments = p.split('/');
@@ -106,6 +107,18 @@ program
     .option('--concurrency <number>', 'Number of files to analyze in parallel', '5')
     .action(async (localPath: string, options: { force?: boolean; concurrency: string }) => {
         await analyze(localPath, {
+            force: !!options.force,
+            concurrency: parseInt(options.concurrency, 10),
+        });
+    });
+
+program
+    .command('decide-location <local-path>')
+    .description('Decide destination location for analyzed files using Claude')
+    .option('--force', 'Re-decide files that already have a location')
+    .option('--concurrency <number>', 'Number of files to process in parallel', '5')
+    .action(async (localPath: string, options: { force?: boolean; concurrency: string }) => {
+        await decideLocation(localPath, {
             force: !!options.force,
             concurrency: parseInt(options.concurrency, 10),
         });
