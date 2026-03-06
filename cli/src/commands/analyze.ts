@@ -13,6 +13,8 @@ const PROMPT = `Analyze the file provided and return ONLY a JSON object (no mark
 - "description": ~100 words explaining what this file is and what's in it. Write it so it works well as input to an embedding model for vector search.
 - "detail": optional. A markdown summary of the key details in the document, formatted for quick scanning. Omit this field if the file has no meaningful detail to extract (e.g. a simple image).
 
+Also consider the full path of the file. Sometimes the names of the containing folders carry meaningful context depending on how the file was organized.
+
 Prefer the Italian language when analyzing documents in Italian, and English for documents in English or other languages. Use the original language only for words that don't translate well, like product names, organization names, specific jargon, etc.
 
 Return ONLY the JSON object.`;
@@ -22,7 +24,7 @@ async function analyzeFile(localPath: string) {
     const dropboxPath = toDropboxPath(absolute);
 
     const basename = path.basename(absolute);
-    const fullPrompt = `${PROMPT}\n\nThe file to analyze is at: ${absolute}\nThe original filename is: ${basename}`;
+    const fullPrompt = `${PROMPT}\n\nThe file to analyze is at: ${absolute}\nThe original filename is: ${basename}\nThe full Dropbox path is: ${dropboxPath}`;
     const text = await askClaude(fullPrompt, { allowedTools: ['Read'] });
 
     const jsonMatch = text.match(/\{[\s\S]*\}/);
