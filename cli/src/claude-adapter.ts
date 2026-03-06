@@ -1,11 +1,11 @@
 import { spawn } from 'node:child_process';
 
 interface AskClaudeOptions {
-    allowedTools?: string[];
+    allowedTools: string[];
 }
 
-export async function askClaude(prompt: string, options?: AskClaudeOptions): Promise<string> {
-    const tools = options?.allowedTools ?? ['Read'];
+export async function askClaude(prompt: string, options: AskClaudeOptions): Promise<string> {
+    const tools = options.allowedTools;
 
     const args = ['-p', '--allowedTools', ...tools, '--output-format', 'json', prompt];
 

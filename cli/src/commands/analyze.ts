@@ -49,7 +49,7 @@ async function analyzeFile(localPath: string) {
 
     const basename = path.basename(absolute);
     const fullPrompt = `${PROMPT}\n\nThe file to analyze is at: ${absolute}\nThe original filename is: ${basename}`;
-    const text = await askClaude(fullPrompt);
+    const text = await askClaude(fullPrompt, { allowedTools: ['Read'] });
 
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
