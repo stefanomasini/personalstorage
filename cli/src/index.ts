@@ -6,7 +6,7 @@ import { getMetadata } from "./commands/get.js";
 import { listMetadata } from "./commands/list.js";
 import { checkMetadata } from "./commands/check.js";
 import { startLiveServer } from "./commands/live.js";
-import { analyzeFile } from "./commands/analyze.js";
+import { analyze } from "./commands/analyze.js";
 
 function normalizePath(p: string): string {
   const segments = p.split("/");
@@ -90,9 +90,14 @@ program
 
 program
   .command("analyze <local-path>")
-  .description("Analyze a local file with Claude and store document metadata")
-  .action(async (localPath: string) => {
-    await analyzeFile(localPath);
+  .description("Analyze a local file or directory with Claude and store document metadata")
+  .option("--force", "Re-analyze files that already have metadata")
+  .option("--concurrency <number>", "Number of files to analyze in parallel", "5")
+  .action(async (localPath: string, options: { force?: boolean; concurrency: string }) => {
+    await analyze(localPath, {
+      force: !!options.force,
+      concurrency: parseInt(options.concurrency, 10),
+    });
   });
 
 program.parseAsync().catch((err) => {
