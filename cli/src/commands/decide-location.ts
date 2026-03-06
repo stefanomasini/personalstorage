@@ -25,10 +25,8 @@ Return ONLY a JSON object (no markdown fences, no extra text) with one field:
 
 When deciding on the filename, prefer the "name" field from the document analysis if available, combined with the original file extension. Use filesystem-safe characters only.`;
 
-async function decideLocationForFile(localPath: string): Promise<string> {
-    const absolute = path.resolve(localPath);
-    const dropboxPath = toDropboxPath(absolute);
-    const ext = path.extname(absolute);
+export async function decideLocationForDropboxPath(dropboxPath: string): Promise<string> {
+    const ext = path.extname(dropboxPath);
 
     const dbx = getClient();
     const templateId = getTemplateId();
@@ -59,7 +57,13 @@ File extension: ${ext}`;
     return result.location;
 }
 
-async function storeLocationMetadata(dropboxPath: string, location: string): Promise<void> {
+async function decideLocationForFile(localPath: string): Promise<string> {
+    const absolute = path.resolve(localPath);
+    const dropboxPath = toDropboxPath(absolute);
+    return decideLocationForDropboxPath(dropboxPath);
+}
+
+export async function storeLocationMetadata(dropboxPath: string, location: string): Promise<void> {
     const dbx = getClient();
     const templateId = getTemplateId();
     const fields = [{ name: FIELD_DOCUMENT_LOCATION, value: location }];

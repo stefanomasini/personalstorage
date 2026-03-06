@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowLeft, ChevronLeft, ChevronRight, Sparkles, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -18,6 +18,7 @@ interface FileDetailViewProps {
 export function FileDetailView({ file, files, onBack, onNavigateFile }: FileDetailViewProps) {
     const [metadata, setMetadata] = useState<Record<string, string> | null>(null);
     const [loading, setLoading] = useState(true);
+    const [suggesting, setSuggesting] = useState(false);
 
     const currentIndex = files.findIndex((f) => f.path === file.path);
     const hasPrev = currentIndex > 0;
@@ -87,7 +88,7 @@ export function FileDetailView({ file, files, onBack, onNavigateFile }: FileDeta
                 <p className="text-sm text-muted-foreground">No metadata found for this file.</p>
             ) : (
                 <div className="space-y-4">
-                    {documentLocation && (
+                    {documentLocation ? (
                         <Card>
                             <CardHeader className="pb-2">
                                 <CardTitle className="text-base">Suggested Location</CardTitle>
@@ -96,7 +97,35 @@ export function FileDetailView({ file, files, onBack, onNavigateFile }: FileDeta
                                 <code className="text-sm bg-muted px-2 py-1 rounded">{documentLocation}</code>
                             </CardContent>
                         </Card>
-                    )}
+                    ) : metadata?.document_contents ? (
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            disabled={suggesting}
+                            onClick={async () => {
+                                setSuggesting(true);
+                                try {
+                                    const res = await api<{ location: string }>('/api/decide-location', {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({ path: file.path }),
+                                    });
+                                    setMetadata((prev) => prev ? { ...prev, document_location: res.location } : prev);
+                                } catch {
+                                    // ignore
+                                } finally {
+                                    setSuggesting(false);
+                                }
+                            }}
+                        >
+                            {suggesting ? (
+                                <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                            ) : (
+                                <Sparkles className="h-4 w-4 mr-1" />
+                            )}
+                            {suggesting ? 'Suggesting...' : 'Suggest location'}
+                        </Button>
+                    ) : null}
 
                     {(docName || docDescription) && (
                         <Card>

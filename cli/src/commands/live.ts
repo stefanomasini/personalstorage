@@ -8,6 +8,7 @@ import { fetchExistingTemplates } from '../metadata.js';
 import { getClient } from '../dropbox.js';
 import { getTemplateId } from '../template-id.js';
 import { FIELD_DOCUMENT_CONTENTS_PREFIX, reassembleDocumentContents } from '../template.js';
+import { decideLocationForDropboxPath, storeLocationMetadata } from './decide-location.js';
 
 const UI_DIST = path.resolve(path.dirname(new URL(import.meta.url).pathname), '../../../ui/dist');
 const ENTRY_HTML = 'live.html';
@@ -104,6 +105,16 @@ export async function startLiveServer(port: number) {
 
                 const fields = await applyMetadata(filePath, options);
                 jsonResponse(res, 200, { ok: true, fields });
+                return;
+            }
+
+            if (method === 'POST' && url === '/api/decide-location') {
+                const body = await readBody(req);
+                const payload = JSON.parse(body);
+                const filePath = normalizePath(payload.path);
+                const location = await decideLocationForDropboxPath(filePath);
+                await storeLocationMetadata(filePath, location);
+                jsonResponse(res, 200, { location });
                 return;
             }
 
