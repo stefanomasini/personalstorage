@@ -105,10 +105,12 @@ program
     .description('Analyze a local file or directory with Claude and store document metadata')
     .option('--force', 'Re-analyze files that already have metadata')
     .option('--concurrency <number>', 'Number of files to analyze in parallel', '5')
-    .action(async (localPath: string, options: { force?: boolean; concurrency: string }) => {
+    .option('--no-decide-location', 'Skip running decide-location after analysis')
+    .action(async (localPath: string, options: { force?: boolean; concurrency: string; decideLocation: boolean }) => {
         await analyze(localPath, {
             force: !!options.force,
             concurrency: parseInt(options.concurrency, 10),
+            decideLocation: options.decideLocation,
         });
     });
 

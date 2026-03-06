@@ -7,6 +7,7 @@ import { FIELD_DOCUMENT_CONTENTS_PREFIX, DOCUMENT_CONTENTS_FIELD_COUNT, DOCUMENT
 import { askClaude } from '../claude-adapter.js';
 import { runWithProgress, type ProcessResult } from '../progress.js';
 import { toDropboxPath, collectFiles, shortName } from '../files.js';
+import { decideLocation } from './decide-location.js';
 
 const PROMPT = `Analyze the file provided and return ONLY a JSON object (no markdown fences, no extra text) with these fields:
 - "name": a short description (a handful of words) of what this file is. Don't state the obvious — for example, if it's an image, don't start with "image of...". If you can determine a meaningful date from the document content (e.g. signature date, invoice date, statement period, publication date — anything that accurately locates the document in time), prefix the name with that date followed by a space, dash and space. Use the format YYYY-MM-DD, or YYYY-MM if only month precision is available, or YYYY if only the year. If no reliable date can be extracted from the content, check the original filename for a date and use that instead. If no date can be determined at all, omit the prefix. Only use filesystem friendly characters, so avoid accents and puntuation.
@@ -79,6 +80,7 @@ const RESET = '\x1b[0m';
 interface AnalyzeOptions {
     force: boolean;
     concurrency: number;
+    decideLocation: boolean;
 }
 
 export async function analyze(localPath: string, options: AnalyzeOptions) {
@@ -99,6 +101,9 @@ export async function analyze(localPath: string, options: AnalyzeOptions) {
             const existing = await fetchFieldValue(dropboxPath, `${FIELD_DOCUMENT_CONTENTS_PREFIX}1`);
             if (existing) {
                 console.log(`${GREEN}✓${RESET} Already analyzed: ${dropboxPath}`);
+                if (options.decideLocation) {
+                    await decideLocation(localPath, { force: options.force, concurrency: options.concurrency });
+                }
                 return;
             }
         }
@@ -108,6 +113,9 @@ export async function analyze(localPath: string, options: AnalyzeOptions) {
         } catch (err) {
             console.error(err);
             process.exit(1);
+        }
+        if (options.decideLocation) {
+            await decideLocation(localPath, { force: options.force, concurrency: options.concurrency });
         }
         return;
     }
@@ -136,4 +144,8 @@ export async function analyze(localPath: string, options: AnalyzeOptions) {
             }
         },
     });
+
+    if (options.decideLocation) {
+        await decideLocation(localPath, { force: options.force, concurrency: options.concurrency });
+    }
 }
