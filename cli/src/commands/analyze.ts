@@ -1,10 +1,10 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { spawn } from 'node:child_process';
 import { getClient } from '../dropbox.js';
 import { getTemplateId } from '../template-id.js';
 import { fetchFieldValue } from '../metadata.js';
 import { FIELD_DOCUMENT_CONTENTS_PREFIX, DOCUMENT_CONTENTS_FIELD_COUNT, DOCUMENT_CONTENTS_CHUNK_SIZE } from '../template.js';
+import { askClaude } from '../claude-adapter.js';
 
 function toDropboxPath(localPath: string): string {
     const absolute = path.resolve(localPath);
@@ -49,20 +49,7 @@ async function analyzeFile(localPath: string) {
 
     const basename = path.basename(absolute);
     const fullPrompt = `${PROMPT}\n\nThe file to analyze is at: ${absolute}\nThe original filename is: ${basename}`;
-    const raw = await new Promise<string>((resolve, reject) => {
-        const child = spawn('claude', ['-p', '--allowedTools', 'Read', '--output-format', 'json', fullPrompt], { stdio: ['ignore', 'pipe', 'pipe'] });
-        const chunks: Buffer[] = [];
-        child.stdout.on('data', (chunk) => chunks.push(chunk));
-        child.on('close', (code) => {
-            const output = Buffer.concat(chunks).toString('utf-8');
-            if (code !== 0) reject(new Error(`claude exited with code ${code}: ${output}`));
-            else resolve(output);
-        });
-        child.on('error', reject);
-    });
-
-    const response = JSON.parse(raw);
-    const text: string = response.result;
+    const text = await askClaude(fullPrompt);
 
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
