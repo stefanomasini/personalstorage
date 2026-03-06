@@ -7,9 +7,19 @@ import { applyMetadata } from './set.js';
 import { fetchExistingTemplates } from '../metadata.js';
 import { getClient } from '../dropbox.js';
 import { getTemplateId } from '../template-id.js';
-import { FIELD_STORAGE_TEMPLATES, FIELD_DOCUMENT_CONTENTS_PREFIX, reassembleDocumentContents } from '../template.js';
+import { FIELD_DOCUMENT_CONTENTS_PREFIX, reassembleDocumentContents } from '../template.js';
 
-const HTML_PATH = path.join(path.dirname(new URL(import.meta.url).pathname), 'live-ui.html');
+const UI_DIST = path.resolve(path.dirname(new URL(import.meta.url).pathname), '../../../ui/dist');
+const ENTRY_HTML = 'live.html';
+
+const MIME_TYPES: Record<string, string> = {
+    '.html': 'text/html',
+    '.js': 'application/javascript',
+    '.css': 'text/css',
+    '.svg': 'image/svg+xml',
+    '.png': 'image/png',
+    '.json': 'application/json',
+};
 
 function jsonResponse(res: http.ServerResponse, status: number, data: unknown) {
     res.writeHead(status, { 'Content-Type': 'application/json' });
@@ -55,13 +65,6 @@ export async function startLiveServer(port: number) {
         const method = req.method ?? 'GET';
 
         try {
-            if (method === 'GET' && (url === '/' || url === '/index.html')) {
-                const html = fs.readFileSync(HTML_PATH, 'utf-8');
-                res.writeHead(200, { 'Content-Type': 'text/html' });
-                res.end(html);
-                return;
-            }
-
             if (method === 'GET' && url.startsWith('/api/list')) {
                 const params = parseQuery(url);
                 const folderPath = normalizePath(params.get('path') ?? '');
@@ -102,6 +105,28 @@ export async function startLiveServer(port: number) {
                 const fields = await applyMetadata(filePath, options);
                 jsonResponse(res, 200, { ok: true, fields });
                 return;
+            }
+
+            // Serve static files from UI dist
+            if (method === 'GET') {
+                const urlPath = url.split('?')[0];
+                const filePath = urlPath === '/' || urlPath === '/index.html'
+                    ? path.join(UI_DIST, ENTRY_HTML)
+                    : path.join(UI_DIST, urlPath);
+
+                const resolved = path.resolve(filePath);
+                if (!resolved.startsWith(UI_DIST)) {
+                    jsonResponse(res, 403, { error: 'Forbidden' });
+                    return;
+                }
+
+                if (fs.existsSync(resolved) && fs.statSync(resolved).isFile()) {
+                    const ext = path.extname(resolved);
+                    const contentType = MIME_TYPES[ext] || 'application/octet-stream';
+                    res.writeHead(200, { 'Content-Type': contentType });
+                    fs.createReadStream(resolved).pipe(res);
+                    return;
+                }
             }
 
             jsonResponse(res, 404, { error: 'Not found' });

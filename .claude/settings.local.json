@@ -20,7 +20,16 @@
       "Bash(mv:*)",
       "Bash(npm install:*)",
       "Bash(npx tsx:*)",
-      "mcp__personalstorage__list"
+      "mcp__personalstorage__list",
+      "mcp__shadcn__get_project_registries",
+      "mcp__shadcn__list_items_in_registries",
+      "mcp__shadcn__search_items_in_registries",
+      "mcp__shadcn__get_add_command_for_items",
+      "mcp__shadcn__view_items_in_registries"
     ]
-  }
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "shadcn"
+  ]
 }
