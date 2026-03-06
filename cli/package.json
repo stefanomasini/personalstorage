@@ -11,8 +11,10 @@
     "format": "prettier --write 'src/**/*.ts'"
   },
   "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.27.1",
     "commander": "^13.1.0",
-    "dropbox": "^10.34.0"
+    "dropbox": "^10.34.0",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@types/node": "^22.13.0",

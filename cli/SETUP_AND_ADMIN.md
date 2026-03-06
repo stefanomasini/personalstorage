@@ -43,6 +43,14 @@ Register the metadata template with Dropbox (creates or updates):
 ./storage-cli init
 ```
 
+## 6. MCP Server for Claude Code
+
+```bash
+claude mcp add personalstorage /Users/stefano/projects/personalstorage/cli/storage-cli -- mcp
+```
+
+The `storage-cli` wrapper loads Dropbox credentials automatically via wellkept.
+
 ## Admin Commands Reference
 
 | Command | Description                                             |

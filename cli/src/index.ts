@@ -7,6 +7,7 @@ import { listMetadata } from './commands/list.js';
 import { checkMetadata } from './commands/check.js';
 import { startLiveServer } from './commands/live.js';
 import { analyze } from './commands/analyze.js';
+import { startMcpServer } from './commands/mcp.js';
 
 function normalizePath(p: string): string {
     const segments = p.split('/');
@@ -108,6 +109,13 @@ program
             force: !!options.force,
             concurrency: parseInt(options.concurrency, 10),
         });
+    });
+
+program
+    .command('mcp')
+    .description('Start an MCP server over stdio')
+    .action(async () => {
+        await startMcpServer();
     });
 
 program.parseAsync().catch((err) => {
