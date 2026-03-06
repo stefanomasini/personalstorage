@@ -37,6 +37,7 @@ export function useFolderNavigation() {
         const normalized = path === '/' ? '' : path;
         setSelectedEntry(null);
         setLoading(true);
+        setListData(null);
         try {
             const data = await api<ListData>('/api/list?path=' + encodeURIComponent(normalized));
             setCurrentPath(normalized);

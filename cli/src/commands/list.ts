@@ -2,6 +2,7 @@ import { getClient } from '../dropbox.js';
 import { getTemplateId } from '../template-id.js';
 import { FIELD_STORAGE_USAGE, FIELD_STORAGE_IGNORE, FIELD_STORAGE_LEAF, FIELD_STORAGE_APPLIED_TEMPLATE, FIELD_DOCUMENT_CONTENTS_PREFIX, FIELD_DOCUMENT_LOCATION } from '../template.js';
 import { fetchExistingTemplates, fetchFieldValue, getParentPath } from '../metadata.js';
+import { getCached, setCached } from '../cache.js';
 
 export interface FolderEntry {
     name: string;
@@ -29,7 +30,16 @@ export interface ListResult {
     files: FileEntry[];
 }
 
-export async function listFolderData(folderPath: string): Promise<ListResult> {
+interface ListFolderOptions {
+    noCache?: boolean;
+}
+
+export async function listFolderData(folderPath: string, options: ListFolderOptions = {}): Promise<ListResult> {
+    if (!options.noCache) {
+        const cached = getCached<ListResult>(folderPath);
+        if (cached) return cached;
+    }
+
     const dbx = getClient();
     const templateId = getTemplateId();
 
@@ -100,12 +110,16 @@ export async function listFolderData(folderPath: string): Promise<ListResult> {
         };
     });
 
-    return {
+    const result: ListResult = {
         path: folderPath || '/',
         appliedTemplate: appliedTemplateName || undefined,
         children,
         files: fileEntries,
     };
+
+    if (!options.noCache) setCached(folderPath, result);
+
+    return result;
 }
 
 interface ListOptions {

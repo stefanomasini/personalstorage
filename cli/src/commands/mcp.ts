@@ -1,8 +1,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import * as z from 'zod/v4';
-import { listFolderData, type ListResult } from './list.js';
-import { getCached, setCached } from '../cache.js';
+import { listFolderData } from './list.js';
 
 export async function startMcpServer(): Promise<void> {
     const server = new McpServer(
@@ -23,9 +22,7 @@ export async function startMcpServer(): Promise<void> {
         },
         async ({ path }) => {
             try {
-                const cached = getCached<ListResult>(path);
-                const result = cached ?? await listFolderData(path);
-                if (!cached) setCached(path, result);
+                const result = await listFolderData(path);
                 return {
                     content: [{ type: 'text' as const, text: JSON.stringify(result, null, 2) }],
                 };

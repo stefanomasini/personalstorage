@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ArrowLeft, ChevronLeft, ChevronRight, Sparkles, Loader2, FolderInput } from 'lucide-react';
+import { ArrowLeft, ChevronLeft, ChevronRight, Sparkles, Loader2, FolderInput, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -23,6 +23,23 @@ export function FileDetailView({ file, files, onBack, onNavigateFile, onFileMove
     const [suggesting, setSuggesting] = useState(false);
     const [editedLocation, setEditedLocation] = useState('');
     const [moving, setMoving] = useState(false);
+
+    const suggestLocation = async () => {
+        setSuggesting(true);
+        try {
+            const res = await api<{ location: string }>('/api/decide-location', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ path: file.path }),
+            });
+            setMetadata((prev) => prev ? { ...prev, document_location: res.location } : prev);
+            setEditedLocation(res.location);
+        } catch {
+            // ignore
+        } finally {
+            setSuggesting(false);
+        }
+    };
 
     const currentIndex = files.findIndex((f) => f.path === file.path);
     const hasPrev = currentIndex > 0;
@@ -108,6 +125,15 @@ export function FileDetailView({ file, files, onBack, onNavigateFile, onFileMove
                                         className="font-mono text-sm"
                                     />
                                     <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        disabled={suggesting || moving}
+                                        onClick={suggestLocation}
+                                        title="Recalculate suggestion"
+                                    >
+                                        <RefreshCw className={`h-4 w-4 ${suggesting ? 'animate-spin' : ''}`} />
+                                    </Button>
+                                    <Button
                                         size="sm"
                                         disabled={moving || !editedLocation.trim()}
                                         onClick={async () => {
@@ -141,22 +167,7 @@ export function FileDetailView({ file, files, onBack, onNavigateFile, onFileMove
                             variant="outline"
                             size="sm"
                             disabled={suggesting}
-                            onClick={async () => {
-                                setSuggesting(true);
-                                try {
-                                    const res = await api<{ location: string }>('/api/decide-location', {
-                                        method: 'POST',
-                                        headers: { 'Content-Type': 'application/json' },
-                                        body: JSON.stringify({ path: file.path }),
-                                    });
-                                    setMetadata((prev) => prev ? { ...prev, document_location: res.location } : prev);
-                                    setEditedLocation(res.location);
-                                } catch {
-                                    // ignore
-                                } finally {
-                                    setSuggesting(false);
-                                }
-                            }}
+                            onClick={suggestLocation}
                         >
                             {suggesting ? (
                                 <Loader2 className="h-4 w-4 mr-1 animate-spin" />

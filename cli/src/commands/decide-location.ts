@@ -7,13 +7,14 @@ import { FIELD_DOCUMENT_LOCATION, reassembleDocumentContents } from '../template
 import { askClaude } from '../claude-adapter.js';
 import { runWithProgress, type ProcessResult } from '../progress.js';
 import { toDropboxPath, collectFiles, shortName } from '../files.js';
+import { listFolderData } from './list.js';
 
 const PROMPT = `You are a file organization assistant. You will receive a JSON document analysis describing a file's contents and the file's current Dropbox path.
 
 Your task: decide the best destination folder and filename for this file within the Dropbox hierarchy.
 
 PROCESS:
-- Use the mcp__personalstorage__list tool to explore the Dropbox folder structure, starting from root (path "")
+- The root folder listing is already provided below. Use the mcp__personalstorage__list tool to drill deeper into subfolders.
 - Each folder has a "usage" annotation explaining what it stores. Use these to navigate toward the right location.
 - Drill down into promising folders until you find the most specific appropriate location (ideally a leaf folder).
 - Consider the document's content, language, date, and type when choosing.
@@ -40,7 +41,14 @@ export async function decideLocationForDropboxPath(dropboxPath: string): Promise
     const docContents = reassembleDocumentContents(group.fields);
     if (!docContents) throw new Error('No document analysis found');
 
+    const rootListing = await listFolderData('');
+
     const fullPrompt = `${PROMPT}
+
+Root folder listing (path ""):
+${JSON.stringify(rootListing, null, 2)}
+
+Do NOT call list with path "" — it is already provided above. Start exploring from subfolders.
 
 Document analysis:
 ${JSON.stringify(docContents, null, 2)}
