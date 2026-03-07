@@ -59,6 +59,7 @@ export function FileDetailView({ file, files, onBack, onNavigateFile, onFileMove
     let docName: string | undefined;
     let docDescription: string | undefined;
     let docDetail: string | undefined;
+    let docRelevantDates: string[] | undefined;
     let documentLocation: string | undefined;
     const otherFields: [string, string][] = [];
 
@@ -69,6 +70,7 @@ export function FileDetailView({ file, files, onBack, onNavigateFile, onFileMove
                 docName = parsed.name;
                 docDescription = parsed.description;
                 docDetail = parsed.detail;
+                docRelevantDates = parsed.relevant_dates;
             } catch {
                 // show raw if unparseable
             }
@@ -185,6 +187,13 @@ export function FileDetailView({ file, files, onBack, onNavigateFile, onFileMove
                             </CardHeader>
                             <CardContent>
                                 {docDescription && <p className="text-sm text-muted-foreground">{docDescription}</p>}
+                                {docRelevantDates && docRelevantDates.length > 0 && (
+                                    <div className="mt-2 flex flex-wrap gap-1">
+                                        {docRelevantDates.map((date, i) => (
+                                            <span key={i} className="inline-block rounded bg-muted px-2 py-0.5 text-xs font-mono text-muted-foreground">{date}</span>
+                                        ))}
+                                    </div>
+                                )}
                             </CardContent>
                         </Card>
                     )}

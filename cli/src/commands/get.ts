@@ -49,10 +49,11 @@ export async function getMetadata(filePath: string) {
 
     const docContents = reassembleDocumentContents(group.fields);
     if (docContents && typeof docContents === 'object') {
-        const doc = docContents as Record<string, string>;
+        const doc = docContents as Record<string, unknown>;
         console.log(`  document_contents:`);
         if (doc.name) console.log(`    name: ${doc.name}`);
         if (doc.description) console.log(`    description: ${doc.description}`);
         if (doc.detail) console.log(`    detail: ${doc.detail}`);
+        if (doc.relevant_dates && Array.isArray(doc.relevant_dates)) console.log(`    relevant_dates: ${(doc.relevant_dates as string[]).join(', ')}`);
     }
 }
