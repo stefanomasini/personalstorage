@@ -11,6 +11,7 @@
     "format": "prettier --write 'src/**/*.ts'"
   },
   "dependencies": {
+    "@google/genai": "^1.44.0",
     "@modelcontextprotocol/sdk": "^1.27.1",
     "commander": "^13.1.0",
     "dropbox": "^10.34.0",

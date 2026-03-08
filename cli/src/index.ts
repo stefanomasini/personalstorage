@@ -102,27 +102,31 @@ program
 
 program
     .command('analyze <local-path>')
-    .description('Analyze a local file or directory with Claude and store document metadata')
+    .description('Analyze a local file or directory and store document metadata')
     .option('--force', 'Re-analyze files that already have metadata')
     .option('--concurrency <number>', 'Number of files to analyze in parallel', '5')
     .option('--no-decide-location', 'Skip running decide-location after analysis')
-    .action(async (localPath: string, options: { force?: boolean; concurrency: string; decideLocation: boolean }) => {
+    .option('--limit <number>', 'Maximum number of files to process')
+    .action(async (localPath: string, options: { force?: boolean; concurrency: string; decideLocation: boolean; limit?: string }) => {
         await analyze(localPath, {
             force: !!options.force,
             concurrency: parseInt(options.concurrency, 10),
             decideLocation: options.decideLocation,
+            limit: options.limit ? parseInt(options.limit, 10) : undefined,
         });
     });
 
 program
     .command('decide-location <local-path>')
-    .description('Decide destination location for analyzed files using Claude')
+    .description('Decide destination location for analyzed files')
     .option('--force', 'Re-decide files that already have a location')
     .option('--concurrency <number>', 'Number of files to process in parallel', '5')
-    .action(async (localPath: string, options: { force?: boolean; concurrency: string }) => {
+    .option('--limit <number>', 'Maximum number of files to process')
+    .action(async (localPath: string, options: { force?: boolean; concurrency: string; limit?: string }) => {
         await decideLocation(localPath, {
             force: !!options.force,
             concurrency: parseInt(options.concurrency, 10),
+            limit: options.limit ? parseInt(options.limit, 10) : undefined,
         });
     });
 

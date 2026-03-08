@@ -129,9 +129,9 @@ export async function startLiveServer(port: number) {
                 const body = await readBody(req);
                 const payload = JSON.parse(body);
                 const filePath = normalizePath(payload.path);
-                const location = await decideLocationForDropboxPath(filePath);
+                const { location, usage } = await decideLocationForDropboxPath(filePath);
                 await storeLocationMetadata(filePath, location);
-                jsonResponse(res, 200, { location });
+                jsonResponse(res, 200, { location, usage });
                 return;
             }
 

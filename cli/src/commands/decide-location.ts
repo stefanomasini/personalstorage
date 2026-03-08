@@ -4,7 +4,7 @@ import { getClient } from '../dropbox.js';
 import { getTemplateId } from '../template-id.js';
 import { fetchFieldValue } from '../metadata.js';
 import { FIELD_DOCUMENT_LOCATION, reassembleDocumentContents } from '../template.js';
-import { askClaude } from '../claude-adapter.js';
+import { chatWithTools, addUsage, formatUsage, type UsageStats } from '../gemini-adapter.js';
 import { runWithProgress, type ProcessResult } from '../progress.js';
 import { toDropboxPath, collectFiles, shortName } from '../files.js';
 import { listFolderData } from './list.js';
@@ -14,7 +14,7 @@ const PROMPT = `You are a file organization assistant. You will receive a JSON d
 Your task: decide the best destination folder and filename for this file within the Dropbox hierarchy.
 
 PROCESS:
-- The root folder listing is already provided below. Use the mcp__personalstorage__list tool to drill deeper into subfolders.
+- The root folder listing is already provided below. Use the list_folder tool to drill deeper into subfolders.
 - Each folder has a "usage" annotation explaining what it stores. Use these to navigate toward the right location.
 - Drill down into promising folders until you find the most specific appropriate location (ideally a leaf folder).
 - Consider the document's content, language, date, and type when choosing.
@@ -26,7 +26,7 @@ Return ONLY a JSON object (no markdown fences, no extra text) with one field:
 
 When deciding on the filename, prefer the "name" field from the document analysis if available, combined with the original file extension. Use filesystem-safe characters only.`;
 
-export async function decideLocationForDropboxPath(dropboxPath: string): Promise<string> {
+export async function decideLocationForDropboxPath(dropboxPath: string, onStatus?: (s: string) => void): Promise<{ location: string; usage: UsageStats }> {
     const ext = path.extname(dropboxPath);
 
     const dbx = getClient();
@@ -48,7 +48,7 @@ export async function decideLocationForDropboxPath(dropboxPath: string): Promise
 Root folder listing (path ""):
 ${JSON.stringify(rootListing, null, 2)}
 
-Do NOT call list with path "" — it is already provided above. Start exploring from subfolders.
+Do NOT call list_folder with path "" — it is already provided above. Start exploring from subfolders.
 
 Document analysis:
 ${JSON.stringify(docContents, null, 2)}
@@ -56,19 +56,33 @@ ${JSON.stringify(docContents, null, 2)}
 Current Dropbox path: ${dropboxPath}
 File extension: ${ext}`;
 
-    const text = await askClaude(fullPrompt, { allowedTools: ['mcp__personalstorage__list'] });
+    const tools = [
+        {
+            name: 'list_folder',
+            description: 'List contents of a Dropbox folder with storage usage annotations',
+            parameters: {
+                type: 'object' as const,
+                properties: { path: { type: 'string' as const, description: 'The Dropbox folder path to list' } },
+                required: ['path'],
+            },
+        },
+    ];
+
+    const { text, usage } = await chatWithTools(fullPrompt, tools, async (name, args) => {
+        return await listFolderData((args.path as string) ?? '');
+    }, onStatus);
 
     const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) throw new Error(`Could not extract JSON from Claude response:\n${text}`);
+    if (!jsonMatch) throw new Error(`Could not extract JSON from response:\n${text}`);
 
     const result = JSON.parse(jsonMatch[0]);
-    return result.location;
+    return { location: result.location, usage };
 }
 
-async function decideLocationForFile(localPath: string): Promise<string> {
+async function decideLocationForFile(localPath: string, onStatus?: (s: string) => void): Promise<{ location: string; usage: UsageStats }> {
     const absolute = path.resolve(localPath);
     const dropboxPath = toDropboxPath(absolute);
-    return decideLocationForDropboxPath(dropboxPath);
+    return decideLocationForDropboxPath(dropboxPath, onStatus);
 }
 
 export async function storeLocationMetadata(dropboxPath: string, location: string): Promise<void> {
@@ -99,17 +113,22 @@ export async function storeLocationMetadata(dropboxPath: string, location: strin
 }
 
 const GREEN = '\x1b[32m';
+const GRAY = '\x1b[90m';
 const RESET = '\x1b[0m';
 
 interface DecideLocationOptions {
     force: boolean;
     concurrency: number;
+    limit?: number;
 }
 
 export async function decideLocation(localPath: string, options: DecideLocationOptions) {
     const absolute = path.resolve(localPath);
     const stat = fs.statSync(absolute);
-    const files = stat.isDirectory() ? collectFiles(absolute) : [absolute];
+    let files = stat.isDirectory() ? collectFiles(absolute) : [absolute];
+    if (options.limit && files.length > options.limit) {
+        files = files.slice(0, options.limit);
+    }
 
     if (files.length === 0) {
         console.log('No files found.');
@@ -130,9 +149,10 @@ export async function decideLocation(localPath: string, options: DecideLocationO
             console.log(`Skipped (no analysis): ${dropboxPath}`);
             return;
         }
-        const location = await decideLocationForFile(files[0]);
+        const { location, usage } = await decideLocationForFile(files[0]);
         await storeLocationMetadata(dropboxPath, location);
         console.log(`${GREEN}✓${RESET} ${dropboxPath} → ${location}`);
+        console.log(`  ${GRAY}${formatUsage(usage)}${RESET}`);
         return;
     }
 
@@ -141,24 +161,26 @@ export async function decideLocation(localPath: string, options: DecideLocationO
         keyFn: (f) => f,
         labelFn: shortName,
         concurrency: options.concurrency,
-        async processItem(file): Promise<ProcessResult> {
+        async processItem(file, setStatus): Promise<ProcessResult> {
             const dropboxPath = toDropboxPath(file);
 
+            setStatus('checking');
             if (!options.force) {
                 const existing = await fetchFieldValue(dropboxPath, FIELD_DOCUMENT_LOCATION);
                 if (existing) return { state: 'skipped' };
             }
 
-            // Skip files without document analysis
             const hasAnalysis = await fetchFieldValue(dropboxPath, 'document_contents_1');
             if (!hasAnalysis) return { state: 'skipped' };
 
             try {
-                const location = await decideLocationForFile(file);
+                setStatus('deciding');
+                const { location, usage } = await decideLocationForFile(file, setStatus);
+                setStatus('saving');
                 await storeLocationMetadata(dropboxPath, location);
-                return { state: 'done' };
-            } catch {
-                return { state: 'error' };
+                return { state: 'done', usage };
+            } catch (err: any) {
+                return { state: 'error', error: err?.message ?? String(err) };
             }
         },
     });
