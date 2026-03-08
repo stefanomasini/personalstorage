@@ -4,7 +4,7 @@ import { getClient } from '../dropbox.js';
 import { getTemplateId } from '../template-id.js';
 import { fetchFieldValue } from '../metadata.js';
 import { FIELD_DOCUMENT_LOCATION, reassembleDocumentContents } from '../template.js';
-import { chatWithTools, addUsage, formatUsage, type UsageStats } from '../gemini-adapter.js';
+import { getAdapter, addUsage, formatUsage, type UsageStats } from '../ai-adapter.js';
 import { runWithProgress, type ProcessResult } from '../progress.js';
 import { toDropboxPath, collectFiles, shortName } from '../files.js';
 import { listFolderData } from './list.js';
@@ -68,7 +68,8 @@ File extension: ${ext}`;
         },
     ];
 
-    const { text, usage } = await chatWithTools(fullPrompt, tools, async (name, args) => {
+    const adapter = await getAdapter();
+    const { text, usage } = await adapter.chatWithTools(fullPrompt, tools, async (name, args) => {
         return await listFolderData((args.path as string) ?? '');
     }, onStatus);
 

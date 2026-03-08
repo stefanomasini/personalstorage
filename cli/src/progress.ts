@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { addUsage, formatUsage, type UsageStats } from './gemini-adapter.js';
+import { addUsage, formatUsage, type UsageStats } from './ai-adapter.js';
 
 const SPINNER = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
 const GREEN = '\x1b[32m';

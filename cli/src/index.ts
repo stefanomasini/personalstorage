@@ -9,6 +9,7 @@ import { startLiveServer } from './commands/live.js';
 import { analyze } from './commands/analyze.js';
 import { startMcpServer } from './commands/mcp.js';
 import { decideLocation } from './commands/decide-location.js';
+import { setProvider } from './ai-adapter.js';
 
 function normalizePath(p: string): string {
     const segments = p.split('/');
@@ -22,7 +23,19 @@ function normalizePath(p: string): string {
 
 const program = new Command();
 
-program.name('storage-cli').description('Manage custom metadata on Dropbox folders/files').version('0.1.0');
+program
+    .name('storage-cli')
+    .description('Manage custom metadata on Dropbox folders/files')
+    .version('0.1.0')
+    .option('--provider <provider>', 'AI provider to use (gemini or claude)', 'gemini')
+    .hook('preAction', (thisCommand) => {
+        const provider = thisCommand.opts().provider;
+        if (provider !== 'gemini' && provider !== 'claude') {
+            console.error(`Unknown provider: ${provider}. Use "gemini" or "claude".`);
+            process.exit(1);
+        }
+        setProvider(provider);
+    });
 
 program
     .command('auth')
