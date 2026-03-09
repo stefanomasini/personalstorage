@@ -51,6 +51,31 @@ claude mcp add personalstorage /Users/stefano/projects/personalstorage/cli/stora
 
 The `storage-cli` wrapper loads Dropbox credentials automatically via wellkept.
 
+## 7. Set Up Pinecone Vector Database
+
+Required for the `embed` command (semantic search).
+
+1. Create a free account at [pinecone.io](https://www.pinecone.io/) (Starter plan allows up to 5 serverless indexes)
+2. Create a serverless index:
+   - Name: `personalstorage`
+   - Configuration: **Manual** (not "Model" — we use OpenAI embeddings externally)
+   - Vector type: **Dense**
+   - Dimensions: `1536`
+   - Metric: `cosine`
+   - Cloud: AWS, Region: `us-east-1`
+3. Copy the API key from the "API Keys" section in the left sidebar
+
+## 8. Store Pinecone & OpenAI Keys
+
+```bash
+wellkept set personalstorage PINECONE_API_KEY "your-pinecone-api-key"
+wellkept set personalstorage OPENAI_API_KEY "sk-your-openai-api-key"
+```
+
+The OpenAI key is used for generating embeddings via `text-embedding-3-small`. Create one at [platform.openai.com/api-keys](https://platform.openai.com/api-keys).
+
+Estimated cost: ~$0.02 per million tokens — embedding a few thousand files costs fractions of a cent.
+
 ## Admin Commands Reference
 
 | Command | Description                                             |

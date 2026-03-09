@@ -95,6 +95,33 @@ The command:
 2. Calls Claude CLI to analyze the file and produce a JSON with `name`, `description`, and optionally `detail`
 3. Stores the result in the `document_contents` metadata field on the Dropbox path
 
+## `embed <local-path>`
+
+Generate vector embeddings for analyzed files and store them in Pinecone for semantic search.
+
+```bash
+./storage-cli embed /Users/you/Dropbox/Documents/
+./storage-cli embed /Users/you/Dropbox/Documents/ --limit 10
+./storage-cli embed /Users/you/Dropbox/Documents/ --dry-run
+./storage-cli embed /Users/you/Dropbox/Documents/ --force
+```
+
+The command:
+1. Collects files and fetches their existing analysis from Dropbox metadata (files without a complete analysis are skipped)
+2. Retrieves the stable Dropbox file ID (used as the vector ID — persists across moves/renames)
+3. Builds embedding text from `name`, `description`, and `detail`
+4. Generates a vector via OpenAI `text-embedding-3-small` (1536 dimensions)
+5. Upserts the vector to Pinecone with metadata: path, name, description, and date bounds for range filtering
+
+| Option                  | Description                                        |
+| ----------------------- | -------------------------------------------------- |
+| `--force`               | Re-embed files that already have vectors            |
+| `--concurrency <n>`     | Number of files to process in parallel (default: 5) |
+| `--limit <n>`           | Maximum number of files to process                  |
+| `--dry-run`             | Show what would be embedded without doing it         |
+
+Files are skipped if the analysis hasn't changed since the last embedding (tracked via a SHA-256 hash stored in Dropbox metadata). Use `--force` to re-embed regardless.
+
 ## `check`
 
 Find terminal folders not marked as leaf. Use this tool to identify folders that may need metadata updates.

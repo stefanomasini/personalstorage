@@ -81,13 +81,13 @@ async function analyzeFile(localPath: string, onStatus?: (s: string) => void): P
 
 const REQUIRED_FIELDS = ['name', 'description', 'detail', 'relevant_dates'];
 
-function isAnalysisComplete(analysis: unknown): boolean {
+export function isAnalysisComplete(analysis: unknown): boolean {
     if (!analysis || typeof analysis !== 'object') return false;
     const obj = analysis as Record<string, unknown>;
     return REQUIRED_FIELDS.every((f) => f in obj);
 }
 
-async function fetchExistingAnalysis(dropboxPath: string): Promise<unknown | undefined> {
+export async function fetchExistingAnalysis(dropboxPath: string): Promise<unknown | undefined> {
     const dbx = getClient();
     const templateId = getTemplateId();
     const response = await (dbx as any).filesGetMetadata({
