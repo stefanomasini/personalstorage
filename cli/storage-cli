@@ -1,3 +1,3 @@
 #!/usr/bin/env bash
 export $(wellkept list personalstorage)
-exec npx tsx "$(dirname "$0")/src/index.ts" "$@"
+exec node --import tsx "$(dirname "$0")/src/index.ts" "$@"

@@ -5,6 +5,7 @@ import { getTemplateId } from '../template-id.js';
 import { fetchFieldValue } from '../metadata.js';
 import { FIELD_DOCUMENT_LOCATION, reassembleDocumentContents } from '../template.js';
 import { getAdapter, addUsage, formatUsage, type UsageStats } from '../ai-adapter.js';
+
 import { runWithProgress, type ProcessResult } from '../progress.js';
 import { toDropboxPath, collectFiles, shortName } from '../files.js';
 import { listFolderData } from './list.js';
