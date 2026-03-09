@@ -152,7 +152,8 @@ program
     .command('recap <local-path>')
     .description('Show a recap of proposed file locations')
     .option('--markdown', 'Force markdown output (default when not a TTY)')
-    .action(async (localPath: string, options: { markdown?: boolean }) => {
+    .option('--move', 'Move files to their proposed locations')
+    .action(async (localPath: string, options: { markdown?: boolean; move?: boolean }) => {
         await recap(localPath, options);
     });
 
