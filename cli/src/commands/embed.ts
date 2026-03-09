@@ -117,14 +117,11 @@ export async function embed(localPath: string, options: EmbedOptions) {
     });
 }
 
-async function processFile(
-    localPath: string,
-    options: EmbedOptions,
+export async function embedDropboxFile(
+    dropboxPath: string,
+    force: boolean,
     setStatus?: (s: string) => void,
 ): Promise<'done' | 'skipped'> {
-    const absolute = path.resolve(localPath);
-    const dropboxPath = toDropboxPath(absolute);
-
     setStatus?.('fetching analysis');
     const data = await fetchAnalysisAndId(dropboxPath);
     if (!data) {
@@ -136,13 +133,8 @@ async function processFile(
     const embeddingText = `${analysis.name}\n\n${analysis.description}\n\n${analysis.detail}`;
     const newHash = hashText(embeddingText);
 
-    if (!options.force && existingHash === newHash) {
+    if (!force && existingHash === newHash) {
         return 'skipped';
-    }
-
-    if (options.dryRun) {
-        setStatus?.('dry run');
-        return 'done';
     }
 
     setStatus?.('generating embedding');
@@ -168,9 +160,26 @@ async function processFile(
         await storeEmbeddingHash(dropboxPath, newHash);
     } catch {
         // Non-fatal: the vector was upserted, but the hash couldn't be saved
-        // (e.g. template not yet updated via `storage-cli init`).
         // The file will simply be re-embedded on the next run.
     }
 
     return 'done';
+}
+
+async function processFile(
+    localPath: string,
+    options: EmbedOptions,
+    setStatus?: (s: string) => void,
+): Promise<'done' | 'skipped'> {
+    const dropboxPath = toDropboxPath(path.resolve(localPath));
+
+    if (options.dryRun) {
+        setStatus?.('fetching analysis');
+        const data = await fetchAnalysisAndId(dropboxPath);
+        if (!data) return 'skipped';
+        setStatus?.('dry run');
+        return 'done';
+    }
+
+    return embedDropboxFile(dropboxPath, options.force, setStatus);
 }

@@ -11,6 +11,7 @@ import { startMcpServer } from './commands/mcp.js';
 import { decideLocation } from './commands/decide-location.js';
 import { recap } from './commands/recap.js';
 import { embed } from './commands/embed.js';
+import { search } from './commands/search.js';
 import { setProvider } from './ai-adapter.js';
 
 function normalizePath(p: string): string {
@@ -121,12 +122,14 @@ program
     .option('--force', 'Re-analyze files that already have metadata')
     .option('--concurrency <number>', 'Number of files to analyze in parallel', '5')
     .option('--no-decide-location', 'Skip running decide-location after analysis')
+    .option('--no-embed', 'Skip embedding after analysis')
     .option('--limit <number>', 'Maximum number of files to process')
-    .action(async (localPath: string, options: { force?: boolean; concurrency: string; decideLocation: boolean; limit?: string }) => {
+    .action(async (localPath: string, options: { force?: boolean; concurrency: string; decideLocation: boolean; embed: boolean; limit?: string }) => {
         await analyze(localPath, {
             force: !!options.force,
             concurrency: parseInt(options.concurrency, 10),
             decideLocation: options.decideLocation,
+            embed: options.embed,
             limit: options.limit ? parseInt(options.limit, 10) : undefined,
         });
     });
@@ -166,6 +169,20 @@ program
             concurrency: parseInt(options.concurrency, 10),
             limit: options.limit ? parseInt(options.limit, 10) : undefined,
             dryRun: !!options.dryRun,
+        });
+    });
+
+program
+    .command('search <query>')
+    .description('Search files by semantic similarity')
+    .option('--from <date>', 'Start of date range filter')
+    .option('--to <date>', 'End of date range filter')
+    .option('--limit <n>', 'Max results', '10')
+    .action(async (query: string, options: { from?: string; to?: string; limit: string }) => {
+        await search(query, {
+            from: options.from,
+            to: options.to,
+            limit: parseInt(options.limit, 10),
         });
     });
 

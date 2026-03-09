@@ -29,3 +29,27 @@ export async function deleteVector(id: string): Promise<void> {
     await getIndex().deleteOne(id);
 }
 
+export interface QueryResult {
+    id: string;
+    score: number;
+    metadata: VectorMetadata;
+}
+
+export async function queryVectors(
+    values: number[],
+    topK: number,
+    filter?: Record<string, any>,
+): Promise<QueryResult[]> {
+    const response = await getIndex().query({
+        vector: values,
+        topK,
+        filter,
+        includeMetadata: true,
+    });
+    return (response.matches ?? []).map((m) => ({
+        id: m.id,
+        score: m.score ?? 0,
+        metadata: m.metadata as unknown as VectorMetadata,
+    }));
+}
+

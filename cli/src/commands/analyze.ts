@@ -9,6 +9,7 @@ import { getAdapter, addUsage, formatUsage, type UsageStats } from '../ai-adapte
 import { runWithProgress, type ProcessResult } from '../progress.js';
 import { toDropboxPath, collectFiles, shortName } from '../files.js';
 import { decideLocationForDropboxPath, storeLocationMetadata } from './decide-location.js';
+import { embedDropboxFile } from './embed.js';
 
 const PROMPT = `Analyze the file provided and return ONLY a JSON object (no markdown fences, no extra text) with these fields:
 - "name": a short description (a handful of words) of what this file is. Don't state the obvious — for example, if it's an image, don't start with "image of...". If you can determine a meaningful date from the document content (e.g. signature date, invoice date, statement period, publication date — anything that accurately locates the document in time), prefix the name with that date followed by a space, dash and space. Use the format YYYY-MM-DD, or YYYY-MM if only month precision is available, or YYYY if only the year. If no reliable date can be extracted from the content, check the original filename for a date and use that instead. If no date can be determined at all, omit the prefix. Only use filesystem friendly characters, so avoid accents and puntuation.
@@ -107,6 +108,7 @@ interface AnalyzeOptions {
     force: boolean;
     concurrency: number;
     decideLocation: boolean;
+    embed: boolean;
     limit?: number;
 }
 
@@ -179,6 +181,10 @@ async function processFile(localPath: string, options: AnalyzeOptions, setStatus
     }
 
     if (!options.decideLocation) {
+        if (options.embed) {
+            setStatus?.('embedding');
+            await embedDropboxFile(dropboxPath, options.force, setStatus);
+        }
         return { state: analyzeUsage ? 'done' : 'skipped', usage: analyzeUsage };
     }
 
@@ -199,8 +205,18 @@ async function processFile(localPath: string, options: AnalyzeOptions, setStatus
             setStatus?.('saving location');
             await storeLocationMetadata(dropboxPath, result.location);
         } else {
+            if (options.embed) {
+                setStatus?.('embedding');
+                const embedResult = await embedDropboxFile(dropboxPath, options.force, setStatus);
+                if (embedResult === 'done') return { state: 'done' };
+            }
             return { state: 'skipped' };
         }
+    }
+
+    if (options.embed) {
+        setStatus?.('embedding');
+        await embedDropboxFile(dropboxPath, options.force, setStatus);
     }
 
     const totalUsage = analyzeUsage && locationUsage

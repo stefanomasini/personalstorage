@@ -51,7 +51,24 @@ claude mcp add personalstorage /Users/stefano/projects/personalstorage/cli/stora
 
 The `storage-cli` wrapper loads Dropbox credentials automatically via wellkept.
 
-## 7. Set Up Pinecone Vector Database
+## 7. MCP Server for Claude Desktop
+
+Add the following to `~/Library/Application Support/Claude/claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "personalstorage": {
+      "command": "/Users/stefano/projects/personalstorage/cli/storage-cli",
+      "args": ["mcp"]
+    }
+  }
+}
+```
+
+The `storage-cli` wrapper loads all credentials (Dropbox, Pinecone, OpenAI) automatically via wellkept. Available tools: `list`, `search`, `get-file-details`, `download-file`.
+
+## 8. Set Up Pinecone Vector Database
 
 Required for the `embed` command (semantic search).
 
@@ -65,7 +82,7 @@ Required for the `embed` command (semantic search).
    - Cloud: AWS, Region: `us-east-1`
 3. Copy the API key from the "API Keys" section in the left sidebar
 
-## 8. Store Pinecone & OpenAI Keys
+## 9. Store Pinecone & OpenAI Keys
 
 ```bash
 wellkept set personalstorage PINECONE_API_KEY "your-pinecone-api-key"
