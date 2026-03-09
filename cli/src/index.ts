@@ -9,6 +9,7 @@ import { startLiveServer } from './commands/live.js';
 import { analyze } from './commands/analyze.js';
 import { startMcpServer } from './commands/mcp.js';
 import { decideLocation } from './commands/decide-location.js';
+import { recap } from './commands/recap.js';
 import { setProvider } from './ai-adapter.js';
 
 function normalizePath(p: string): string {
@@ -141,6 +142,14 @@ program
             concurrency: parseInt(options.concurrency, 10),
             limit: options.limit ? parseInt(options.limit, 10) : undefined,
         });
+    });
+
+program
+    .command('recap <local-path>')
+    .description('Show a recap of proposed file locations')
+    .option('--markdown', 'Force markdown output (default when not a TTY)')
+    .action(async (localPath: string, options: { markdown?: boolean }) => {
+        await recap(localPath, options);
     });
 
 program
