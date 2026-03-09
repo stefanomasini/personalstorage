@@ -1,3 +1,19 @@
 #!/usr/bin/env bash
-export $(wellkept list personalstorage)
-exec node --import tsx "$(dirname "$0")/src/index.ts" "$@"
+
+set -euo pipefail
+
+SOURCE="${BASH_SOURCE[0]}"
+while [ -h "$SOURCE" ]; do
+  DIR="$( cd -P "$( dirname "$SOURCE" )" >/dev/null 2>&1 && pwd )"
+  SOURCE="$(readlink "$SOURCE")"
+  [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE"
+done
+DIR="$( cd -P "$( dirname "$SOURCE" )" >/dev/null 2>&1 && pwd )"
+
+cd "$DIR"
+
+set -a
+eval "$(wellkept list personalstorage)"
+set +a
+
+exec node --import tsx src/index.ts "$@"
