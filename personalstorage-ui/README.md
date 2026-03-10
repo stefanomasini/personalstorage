@@ -42,8 +42,8 @@ npm run dev     # watch mode (rebuilds on file changes)
 ## Dev workflow
 
 ```
-Terminal 1: cd ui && nvm use && npm run dev
-Terminal 2: cd cli && ./storage-cli live
+Terminal 1: cd personalstorage-ui && nvm use && npm run dev
+Terminal 2: cd personalstorage-cli && ./storage-cli live
 ```
 
 Edit source → Terminal 1 rebuilds → refresh browser.

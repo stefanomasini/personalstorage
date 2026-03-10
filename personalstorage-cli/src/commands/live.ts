@@ -10,7 +10,7 @@ import { getTemplateId } from '../template-id.js';
 import { FIELD_DOCUMENT_CONTENTS_PREFIX, reassembleDocumentContents } from '../template.js';
 import { decideLocationForDropboxPath, storeLocationMetadata } from './decide-location.js';
 
-const UI_DIST = path.resolve(path.dirname(new URL(import.meta.url).pathname), '../../../ui/dist');
+const UI_DIST = path.resolve(path.dirname(new URL(import.meta.url).pathname), '../../../personalstorage-ui/dist');
 const ENTRY_HTML = 'live.html';
 
 const MIME_TYPES: Record<string, string> = {

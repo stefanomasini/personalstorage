@@ -1,9 +1,9 @@
 # Usage
 
-All commands are run from the `cli/` directory using the `./storage-cli` wrapper, which loads credentials automatically via `wellkept`:
+All commands are run from the `personalstorage-cli/` directory using the `./storage-cli` wrapper, which loads credentials automatically via `wellkept`:
 
 ```bash
-cd cli
+cd personalstorage-cli
 ./storage-cli <command> [options]
 ```
 

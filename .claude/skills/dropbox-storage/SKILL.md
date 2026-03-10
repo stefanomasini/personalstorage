@@ -5,7 +5,7 @@ description: Understand how to use Dropbox as personal storage. Use the dedicate
 
 Read the following files for CLI documentation:
 
-- `../../cli/USAGE.md` — all user-facing commands and options
-- `../../cli/SETUP_AND_ADMIN.md` — setup, credentials, and admin commands
+- `../../personalstorage-cli/USAGE.md` — all user-facing commands and options
+- `../../personalstorage-cli/SETUP_AND_ADMIN.md` — setup, credentials, and admin commands
 
 Use the CLI tool to navigate the Dropbox file system and understand the usage patterns of different folders.
